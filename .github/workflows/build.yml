@@ -1,0 +1,147 @@
+name: build
+on: [push, pull_request]
+
+jobs:
+  quality-check:
+    name: "Coding standards & test coverage"
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: ['ubuntu-latest']
+        php-versions: ['7.4']
+    env:
+      extensions: pcov, dom, json, libxml, mbstring, pdo_sqlite, soap, xml, xmlwriter
+      key: cache-v3
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+      - name: "Setup PHP extensions cache environment"
+        id: cache-env
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: ${{ env.extensions }}
+          key: ${{ env.key }}
+      - name: "Cache PHP extensions"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.cache-env.outputs.dir }}
+          key: ${{ steps.cache-env.outputs.key }}
+          restore-keys: ${{ steps.cache-env.outputs.key }}
+      - name: "Install PHP with extensions"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: pcov
+          extensions: ${{ env.extensions }}
+          ini-values: assert.exception=1, zend.assertions=1
+      - name: "Install Composer dependencies"
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: highest
+          composer-options: --prefer-stable
+          custom-cache-key: composer-${{ runner.os }}-php${{ matrix.php-versions }}-${{ hashFiles('**/composer.json') }}
+      - name: "Coding standard Php-CS-Fixer checks"
+        run: vendor/bin/php-cs-fixer --dry-run -v --config=cs-fixer.php.dist --path-mode=intersection fix src tests
+      - name: "Coding standard CodeSniffer checks"
+        run: |
+          vendor/bin/phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors src
+          vendor/bin/phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors --ignore=*/code-samples/* tests
+      - name: "Package skeleton validation"
+        run: vendor/bin/polymorphine-skeleton check
+      - name: "Run PhpUnit tests with coverage"
+        run: |
+          mkdir -p .dev/logs
+          vendor/bin/phpunit --coverage-clover .dev/logs/clover.xml
+      - name: "Send coverage report to coveralls.io"
+        run: |
+          composer require php-coveralls/php-coveralls
+          vendor/bin/php-coveralls -v -o .dev/logs/coveralls-upload.json -x .dev/logs/clover.xml
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+  platform-compatibility:
+    name: "Operating systems"
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        php-versions: ['8.4']
+    env:
+      extensions: dom, json, libxml, mbstring, pdo_sqlite, soap, xml, xmlwriter
+      key: cache-v3
+    steps:
+      - name: "Turn off git EOL conversion"
+        run: git config --global core.autocrlf false
+      - name: "Checkout"
+        uses: actions/checkout@v3
+      - name: "Setup PHP extensions cache environment"
+        id: cache-env
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: ${{ env.extensions }}
+          key: ${{ env.key }}
+      - name: "Cache PHP extensions"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.cache-env.outputs.dir }}
+          key: ${{ steps.cache-env.outputs.key }}
+          restore-keys: ${{ steps.cache-env.outputs.key }}
+      - name: "Install PHP with extensions"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: none
+          extensions: ${{ env.extensions }}
+          ini-values: assert.exception=1, zend.assertions=1
+      - name: "Install Composer dependencies"
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: highest
+          composer-options: --prefer-stable
+          custom-cache-key: composer-${{ runner.os }}-php${{ matrix.php-versions }}-${{ hashFiles('**/composer.json') }}
+      - name: "Run PhpUnit tests (no coverage)"
+        run: vendor/bin/phpunit --no-coverage
+
+  php-versions:
+    name: "PHP versions"
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: ['ubuntu-latest']
+        php-versions: ['8.0', '8.1', '8.2', '8.3']
+    env:
+      extensions: dom, json, libxml, mbstring, pdo_sqlite, soap, xml, xmlwriter
+      key: cache-v3
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+      - name: "Setup PHP extensions cache environment"
+        id: cache-env
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: ${{ env.extensions }}
+          key: ${{ env.key }}
+      - name: "Cache PHP extensions"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.cache-env.outputs.dir }}
+          key: ${{ steps.cache-env.outputs.key }}
+          restore-keys: ${{ steps.cache-env.outputs.key }}
+      - name: "Install PHP with extensions"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: none
+          extensions: ${{ env.extensions }}
+          ini-values: assert.exception=1, zend.assertions=1
+      - name: "Install Composer dependencies"
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: highest
+          composer-options: --prefer-stable
+          custom-cache-key: composer-${{ runner.os }}-php${{ matrix.php-versions }}-${{ hashFiles('**/composer.json') }}
+      - name: "Run PhpUnit tests (no coverage)"
+        run: vendor/bin/phpunit --no-coverage

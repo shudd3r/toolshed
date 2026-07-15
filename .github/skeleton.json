@@ -1,0 +1,8 @@
+{
+    "package.name": "Shudd3r/Toolshed",
+    "repository.name": "shudd3r/toolshed",
+    "package.description": "Composer plugin orchestrating global dev tool packages",
+    "namespace.src": "Shudd3r\\Toolshed",
+    "author.name": "shudd3r",
+    "author.email": "q3.shudder@gmail.com"
+}

@@ -1,0 +1,45 @@
+{
+    "name": "shudd3r/toolshed",
+    "description": "Composer plugin orchestrating global dev tool packages",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "shudd3r",
+            "email": "q3.shudder@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "ext-json": "*",
+        "composer-plugin-api": "^2.0"
+    },
+    "require-dev": {
+        "polymorphine/dev": "0.6.0",
+        "composer/composer": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Shudd3r\\Toolshed\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Shudd3r\\Toolshed\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test-cs": [
+            "php-cs-fixer --dry-run -v --config=cs-fixer.php.dist --path-mode=intersection fix src tests",
+            "phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors src",
+            "phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors --ignore=*/code-samples/* tests"
+        ],
+        "test-php": "phpunit",
+        "test-skeleton": "polymorphine-skeleton check"
+    },
+    "extra": {
+        "class": "Shudd3r\\Toolshed\\ToolshedPlugin",
+        "plugin-modifies-install-path": true,
+        "plugin-optional": true
+    }
+}
