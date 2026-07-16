@@ -26,6 +26,8 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
 
     public function activate(Composer $composer, IOInterface $io)
     {
+        $sharedTools = $composer->getPackage()->getExtra()['shared-tools'] ?? [];
+        if (!$sharedTools) { return; }
         $io->write('Activating');
     }
 
