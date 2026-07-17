@@ -10,7 +10,7 @@ Detailed description (optional)...
 
 ### Installation with [Composer](https://getcomposer.org/)
 ```bash
-composer require shudd3r/toolshed
+composer global require shudd3r/toolshed
 ```
 
 Your content here...

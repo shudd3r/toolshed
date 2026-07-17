@@ -15,7 +15,7 @@
         "composer-plugin-api": "^2.0"
     },
     "require-dev": {
-        "polymorphine/dev": "0.6.0",
+        "polymorphine/dev": "0.6.1",
         "composer/composer": "^2.0"
     },
     "autoload": {
