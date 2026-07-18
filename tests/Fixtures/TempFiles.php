@@ -1,0 +1,88 @@
+<?php declare(strict_types=1);
+
+/*
+ * This file is part of Shudd3r/Toolshed package.
+ *
+ * (c) shudd3r <q3.shudder@gmail.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
+namespace Shudd3r\Toolshed\Tests\Fixtures;
+
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
+use Traversable;
+
+
+class TempFiles
+{
+    private string $root;
+
+    public function __construct(string $testName)
+    {
+        $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . $testName;
+        $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->relative($tmpName);
+        is_dir($this->root) || mkdir($this->root, 0700, true);
+    }
+
+    public function clear(): void
+    {
+        foreach ($this->nodes($this->root) as $pathname) {
+            $this->remove($pathname);
+        }
+    }
+
+    public function nodes(string $rootPath): Traversable
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($rootPath, $flags);
+        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+    }
+
+    public function file(string $filename, string $contents = ''): string
+    {
+        $this->directory(dirname($filename));
+        file_put_contents($filename = $this->pathname($filename), $contents);
+        return $filename;
+    }
+
+    public function directory(string $directory = ''): string
+    {
+        $directory = $directory === '' ? $this->root : $this->pathname($directory);
+        if (!is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+        return $directory;
+    }
+
+    public function remove(string $pathname): void
+    {
+        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
+        if ($isFile || is_dir($pathname)) {
+            $isFile ? unlink($pathname) : rmdir($pathname);
+            return;
+        }
+
+        @unlink($pathname) || rmdir($pathname);
+    }
+
+    public function pathname(string $nodeName): string
+    {
+        return $nodeName ? $this->root . DIRECTORY_SEPARATOR . $this->relative($nodeName) : $this->root;
+    }
+
+    public function relative(string $path): string
+    {
+        return trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+    }
+
+    public function __destruct()
+    {
+        $this->clear();
+        rmdir($this->root);
+    }
+}
