@@ -19,16 +19,39 @@ use Composer\IO\IOInterface;
 
 class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSubscriberInterface
 {
+    private static bool $isPluginActive = false;
+
     public static function getSubscribedEvents(): array
     {
-        return [];
+        if (!self::$isPluginActive) { return []; }
+
+        return [
+            Plugin\PluginEvents::COMMAND         => 'verifyInstallCommand',
+            Plugin\PluginEvents::PRE_POOL_CREATE => 'manageSharedTools'
+        ];
     }
+
+    private IOInterface $io;
 
     public function activate(Composer $composer, IOInterface $io)
     {
         $sharedTools = $composer->getPackage()->getExtra()['shared-tools'] ?? [];
-        if (!$sharedTools) { return; }
-        $io->write('Activating');
+        self::$isPluginActive = !empty($sharedTools);
+        if (!self::$isPluginActive) { return; }
+
+        $this->io = $io;
+    }
+
+    public function verifyInstallCommand(Plugin\CommandEvent $event): void
+    {
+        $installCommand = in_array($event->getCommandName(), ['install', 'update'], true);
+        self::$isPluginActive = $installCommand && !$event->getInput()->getOption('no-dev');
+    }
+
+    public function manageSharedTools(): void
+    {
+        if (!self::$isPluginActive) { return; }
+        $this->io->write('Activating');
     }
 
     public function deactivate(Composer $composer, IOInterface $io)
