@@ -9,12 +9,12 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\SharedFiles;
+namespace Shudd3r\Toolshed\MetaData;
 
-use Shudd3r\Toolshed\SharedFiles;
+use Shudd3r\Toolshed\MetaData;
 
 
-class LocalSharedFiles implements SharedFiles
+class FileMetaData implements MetaData
 {
     private string $toolsDirectory;
 

@@ -12,7 +12,7 @@
 namespace Shudd3r\Toolshed;
 
 
-interface SharedFiles
+interface MetaData
 {
     public function installations(): array;
 
