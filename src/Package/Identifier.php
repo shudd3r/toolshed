@@ -20,6 +20,13 @@ use LogicException;
 
 class Identifier
 {
+    public static function fromString(string $identifier): self
+    {
+        [$vendor, $package, $version] = explode('.', $identifier, 3) + ['', '', '*'];
+        $constraint = self::parseConstraint($version === 'unresolved' ? '*' : $version);
+        return new self($vendor . '/' . $package, $constraint, self::parseConstraint('*'));
+    }
+
     public static function parseConstraint(string $version): Constraint
     {
         $parser = new VersionParser();
