@@ -11,18 +11,19 @@
 
 namespace Shudd3r\Toolshed;
 
+use Shudd3r\Toolshed\Package\Identifier;
+
 
 class RequiredTools
 {
     private string $packageBinDirectory;
-    private string $phpConstraint;
-    private array  $toolConstraints;
+    private array  $toolIdentifiers;
 
-    public function __construct(string $packageBinDirectory, string $phpConstraint, array $toolConstraints)
+    /** @param array<Identifier> $toolIdentifiers */
+    public function __construct(string $packageBinDirectory, array $toolIdentifiers)
     {
         $this->packageBinDirectory = $packageBinDirectory;
-        $this->phpConstraint       = $phpConstraint;
-        $this->toolConstraints     = $toolConstraints;
+        $this->toolIdentifiers     = $toolIdentifiers;
     }
 
     public function packageBinDirectory(): string
@@ -30,13 +31,9 @@ class RequiredTools
         return $this->packageBinDirectory;
     }
 
-    public function phpConstraint(): string
+    /** @return array<Identifier> */
+    public function toolIdentifiers(): array
     {
-        return $this->phpConstraint;
-    }
-
-    public function toolConstraints(): array
-    {
-        return $this->toolConstraints;
+        return $this->toolIdentifiers;
     }
 }

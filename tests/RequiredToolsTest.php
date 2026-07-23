@@ -13,7 +13,7 @@ namespace Shudd3r\Toolshed\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\RequiredTools;
-use Composer\Semver\Constraint\Constraint;
+use Shudd3r\Toolshed\Package\Identifier;
 
 
 class RequiredToolsTest extends TestCase
@@ -21,16 +21,14 @@ class RequiredToolsTest extends TestCase
     public function testInstanceDataMethods()
     {
         $packageBinDirectory = __DIR__;
-        $phpConstraint       = '^7.4';
-        $toolConstraints = [
-            'phpunit/phpunit'  => new Constraint('=', '1.2.3'),
-            'polymorphine/dev' => new Constraint('=', '0.6.0')
+        $phpConstraint       = Identifier::parseConstraint('^7.4 || ^8.0');
+        $toolIdentifiers = [
+            new Identifier('phpunit/phpunit', Identifier::parseConstraint('^9.5'), $phpConstraint),
+            new Identifier('polymorphine/dev', Identifier::parseConstraint('0.6.0'), $phpConstraint)
         ];
 
-        $tools = new RequiredTools($packageBinDirectory, $phpConstraint, $toolConstraints);
-
+        $tools = new RequiredTools($packageBinDirectory, $toolIdentifiers);
         $this->assertSame($packageBinDirectory, $tools->packageBinDirectory());
-        $this->assertSame($phpConstraint, $tools->phpConstraint());
-        $this->assertSame($toolConstraints, $tools->toolConstraints());
+        $this->assertSame($toolIdentifiers, $tools->toolIdentifiers());
     }
 }
