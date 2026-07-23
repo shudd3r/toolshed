@@ -13,23 +13,65 @@ namespace Shudd3r\Toolshed\Tests\Package;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Package\Identifier;
+use Composer\Semver\Constraint\ConstraintInterface;
+use InvalidArgumentException;
+use LogicException;
 
 
 class IdentifierTest extends TestCase
 {
-    public function testIdentifierRepresentations()
-    {
-        $id = new Identifier('phpunit/phpunit', '^9.5', '^7.4');
-        $this->assertFalse($id->isResolved());
-        $this->assertSame('phpunit.phpunit.unresolved', (string) $id);
-        $unresolvedRequire = ['require' => ['php' => '^7.4', 'phpunit/phpunit' => '^9.5']];
-        $this->assertEquals($unresolvedRequire, $id->composerRequire());
+    private static ConstraintInterface $php;
 
-        $id = $id->resolvedTo('1.2.3');
+    /** @dataProvider exactConstraints */
+    public function testExactConstraintsIdentifier(string $version)
+    {
+        $id = $this->id($version);
         $this->assertTrue($id->isResolved());
-        $this->assertSame('phpunit.phpunit.1.2.3', (string) $id);
-        $this->assertEquals(new Identifier('phpunit/phpunit', '1.2.3'), $id);
-        $resolvedRequire = ['require' => ['phpunit/phpunit' => '1.2.3']];
-        $this->assertEquals($resolvedRequire, $id->composerRequire());
+        $require = ['require' => ['vendor/package' => $version]];
+        $this->assertSame($require, $id->composerRequire());
+        $this->assertSame('vendor.package.' . $version, (string) $id);
+    }
+
+    /** @dataProvider exactConstraints */
+    public function testResolveTo_ForResolvedIdentifier_ThrowsException(string $version)
+    {
+        $id = $this->id($version);
+        $this->expectException(LogicException::class);
+        $id->resolvedTo(Identifier::parseConstraint('1.2.3'));
+    }
+
+    /** @dataProvider rangeConstraints */
+    public function testUnresolvedIdentifier(string $version)
+    {
+        $id = $this->id($version);
+        $this->assertFalse($id->isResolved());
+        $require = ['require' => ['php' => '^7.4 || ^8.0', 'vendor/package' => $version]];
+        $this->assertSame($require, $id->composerRequire());
+        $this->assertSame('vendor.package.unresolved', (string) $id);
+        $this->assertEquals($this->id('1.2.3'), $id->resolvedTo(Identifier::parseConstraint('1.2.3')));
+    }
+
+    /** @dataProvider rangeConstraints */
+    public function testResolveTo_ForRangeConstraint_ThrowsException(string $version)
+    {
+        $id = $this->id('^5.1 || ^6.0');
+        $this->expectException(InvalidArgumentException::class);
+        $id->resolvedTo(Identifier::parseConstraint($version));
+    }
+
+    public function exactConstraints(): array
+    {
+        return [['dev-master'], ['dev-branch'], ['0.1-beta'], ['1.2.3.4'], ['35.2.19']];
+    }
+
+    public function rangeConstraints(): array
+    {
+        return [['1.0 || 2.0'], ['~1.4.0'], ['>= 5.1.4 <= 7.5'], ['^7.3 || ^8.0']];
+    }
+
+    private function id(string $version): Identifier
+    {
+        self::$php ??= Identifier::parseConstraint('^7.4 || ^8.0');
+        return new Identifier('vendor/package', Identifier::parseConstraint($version), self::$php);
     }
 }
