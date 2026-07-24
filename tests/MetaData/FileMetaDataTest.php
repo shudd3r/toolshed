@@ -57,4 +57,12 @@ class FileMetaDataTest extends TestCase
         $data->saveInstallations($saved);
         $this->assertSame($saved, $data->installations());
     }
+
+    public function testCheckingIfLocationExists()
+    {
+        $data = new FileMetaData(self::$temp->pathname('fake-tools-directory'));
+        $this->assertTrue($data->locationExists(self::$temp->directory('new/directory')));
+        $this->assertFalse($data->locationExists(self::$temp->file('not/directory')));
+        $this->assertFalse($data->locationExists(self::$temp->pathname('not/existing/directory')));
+    }
 }

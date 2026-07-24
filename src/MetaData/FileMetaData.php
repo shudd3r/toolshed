@@ -40,4 +40,9 @@ class FileMetaData implements MetaData
         $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
         file_put_contents($installDataFile, json_encode($installations, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
+
+    public function locationExists(string $location): bool
+    {
+        return is_dir($location);
+    }
 }
