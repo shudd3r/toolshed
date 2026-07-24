@@ -1,0 +1,27 @@
+<?php declare(strict_types=1);
+
+/*
+ * This file is part of Shudd3r/Toolshed package.
+ *
+ * (c) shudd3r <q3.shudder@gmail.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
+namespace Shudd3r\Toolshed\Tools;
+
+use Shudd3r\Toolshed\Tools\Tool\Identifier;
+
+
+interface Tool
+{
+    public function identifier(): Identifier;
+
+    public function synchronize(string $projectBinDirectory): void;
+
+    public function remove(string $projectBinDirectory): void;
+
+    /** @return array<string> */
+    public function binaries(): array;
+}

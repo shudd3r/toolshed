@@ -11,7 +11,7 @@
 
 namespace Shudd3r\Toolshed;
 
-use Shudd3r\Toolshed\Package\Identifier;
+use Shudd3r\Toolshed\Tools\Tool\Identifier;
 
 
 class RequiredTools

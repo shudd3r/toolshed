@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Package;
+namespace Shudd3r\Toolshed\Tools\Tool;
 
 use Composer\Semver\Constraint\ConstraintInterface as Constraint;
 use Composer\Semver\Constraint\Constraint as SimpleConstraint;

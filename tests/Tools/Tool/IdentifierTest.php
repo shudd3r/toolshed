@@ -9,10 +9,10 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\Package;
+namespace Shudd3r\Toolshed\Tests\Tools\Tool;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Package\Identifier;
+use Shudd3r\Toolshed\Tools\Tool\Identifier;
 use Composer\Semver\Constraint\ConstraintInterface;
 use InvalidArgumentException;
 use LogicException;
