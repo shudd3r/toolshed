@@ -17,6 +17,4 @@ interface MetaData
     public function installations(): array;
 
     public function saveInstallations(array $installations): void;
-
-    public function locationExists(string $location): bool;
 }

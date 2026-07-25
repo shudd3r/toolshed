@@ -16,13 +16,11 @@ use Shudd3r\Toolshed\MetaData;
 
 class FakeMetaData implements MetaData
 {
-    public static array $installations    = [];
-    public static array $missingLocations = [];
+    public static array $installations = [];
 
-    public function __construct(?array $installations = null, ?array $missingLocations = null)
+    public function __construct(?array $installations = null)
     {
-        self::$installations    = $installations ?? self::$installations;
-        self::$missingLocations = $missingLocations ?? self::$missingLocations;
+        self::$installations = $installations ?? self::$installations;
     }
 
     public function installations(): array
@@ -33,10 +31,5 @@ class FakeMetaData implements MetaData
     public function saveInstallations(array $installations): void
     {
         self::$installations = $installations;
-    }
-
-    public function locationExists(string $location): bool
-    {
-        return !in_array($location, self::$missingLocations, true);
     }
 }

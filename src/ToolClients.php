@@ -30,14 +30,13 @@ class ToolClients
         $clientBinDir = str_replace('\\', '/', $clientBinDir);
         foreach ($this->updated as $packageVer => &$locations) {
             $toolFound = in_array($packageVer, $toolVersions, true);
-            $remove    = $this->missingLocations($locations, $toolFound ? null : $clientBinDir);
-            if ($toolFound && !in_array($clientBinDir, $locations, true)) {
+            $pathFound = in_array($clientBinDir, $locations, true);
+            if ($toolFound && !$pathFound) {
                 $locations[] = $clientBinDir;
                 sort($locations);
+            } elseif (!$toolFound && $pathFound) {
+                $locations = array_values(array_diff($locations, [$clientBinDir]));
             }
-
-            if (!$remove) { continue; }
-            $locations = array_values(array_diff($locations, $remove));
         }
 
         foreach ($toolVersions as $packageVer) {
@@ -50,11 +49,6 @@ class ToolClients
 
     public function unusedTools(): array
     {
-        foreach ($this->updated as &$locations) {
-            if (!$remove = $this->missingLocations($locations)) { continue; }
-            $locations = array_values(array_diff($locations, $remove));
-        }
-
         return array_keys(array_filter($this->updated, fn (array $locations) => $locations === []));
     }
 
@@ -67,18 +61,5 @@ class ToolClients
     {
         if ($this->tracked === $this->updated) { return; }
         $this->data->saveInstallations($this->updated);
-    }
-
-    private function missingLocations(array $locations, ?string $outdatedLocation = null): array
-    {
-        $remove = [];
-        foreach ($locations as $location) {
-            $isOutdated = $outdatedLocation === $location;
-            if ($this->data->locationExists($location) && !$isOutdated) {
-                continue;
-            }
-            $remove[] = $location;
-        }
-        return $remove;
     }
 }

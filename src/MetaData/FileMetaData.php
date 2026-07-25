@@ -26,9 +26,21 @@ class FileMetaData implements MetaData
     public function installations(): array
     {
         $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
-        return is_file($installDataFile)
+        $installations = is_file($installDataFile)
             ? json_decode(file_get_contents($installDataFile), true) ?? []
             : [];
+
+        $update = false;
+        foreach ($installations as &$locations) {
+            $remove = $this->missingLocations($locations);
+            if (!$remove) { continue; }
+            $locations = array_values(array_diff($locations, $remove));
+            $update    = true;
+        }
+
+        if ($update) { $this->saveInstallations($installations); }
+
+        return $installations;
     }
 
     public function saveInstallations(array $installations): void
@@ -41,7 +53,17 @@ class FileMetaData implements MetaData
         file_put_contents($installDataFile, json_encode($installations, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
 
-    public function locationExists(string $location): bool
+    private function missingLocations(array $locations): array
+    {
+        $missingLocations = [];
+        foreach ($locations as $location) {
+            if ($this->locationExists($location)) { continue; }
+            $missingLocations[] = $location;
+        }
+        return $missingLocations;
+    }
+
+    private function locationExists(string $location): bool
     {
         return is_dir($location);
     }

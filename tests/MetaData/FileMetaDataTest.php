@@ -32,10 +32,10 @@ class FileMetaDataTest extends TestCase
 
     public function testInstallations_WhenMetaDataCannotBeRead_ReturnsEmptyArray()
     {
-        $data = new FileMetaData(self::$temp->pathname('not-existing-directory'));
+        $data = $this->data();
         $this->assertEmpty($data->installations());
 
-        $data = new FileMetaData(self::$temp->directory('shared-files'));
+        self::$temp->directory('shared-files');
         $this->assertEmpty($data->installations());
 
         self::$temp->file('shared-files/install-locations.json', '--- not json structure ---');
@@ -44,25 +44,42 @@ class FileMetaDataTest extends TestCase
 
     public function testInstallations_ForValidMetaDataSource_ReturnsDecodedJsonStructure()
     {
-        $data  = new FileMetaData(self::$temp->directory('shared-files'));
-        $saved = ['foo.bar.1.2.3' => '/some/directory'];
-        self::$temp->file('shared-files/install-locations.json', json_encode($saved));
-        $this->assertSame($saved, $data->installations());
+        $file = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
+        $data = $this->data($file);
+        $this->assertSame($file, $data->installations());
     }
 
     public function testSaveInstallations_CreatesValidMetaData()
     {
-        $data  = new FileMetaData(self::$temp->pathname('not-existing-directory'));
-        $saved = ['foo.bar.1.2.3' => '/some/directory'];
-        $data->saveInstallations($saved);
-        $this->assertSame($saved, $data->installations());
+        $data = $this->data();
+        $save = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
+        $data->saveInstallations($save);
+        $this->assertSame($save, $data->installations());
     }
 
-    public function testCheckingIfLocationExists()
+    public function testNotExistingLocations_AreRemovedOnRead()
     {
-        $data = new FileMetaData(self::$temp->pathname('fake-tools-directory'));
-        $this->assertTrue($data->locationExists(self::$temp->directory('new/directory')));
-        $this->assertFalse($data->locationExists(self::$temp->file('not/directory')));
-        $this->assertFalse($data->locationExists(self::$temp->pathname('not/existing/directory')));
+        $locations = [
+            self::$temp->directory('new/directory'),
+            self::$temp->file('not/directory'),
+            self::$temp->pathname('not/existing/directory')
+        ];
+
+        $data = $this->data(['foo.bar.1.2.3' => $locations]);
+
+        $expected = ['foo.bar.1.2.3' => [self::$temp->directory('new/directory')]];
+        $this->assertSame($expected, $data->installations());
+
+        $filename = self::$temp->pathname('shared-tools/install-locations.json');
+        $this->assertSame($expected, json_decode(file_get_contents($filename), true));
+    }
+
+    private function data(?array $fileContents = null): FileMetaData
+    {
+        if ($fileContents !== null) {
+            $contents = json_encode($fileContents, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+            self::$temp->file('shared-tools/install-locations.json', $contents);
+        }
+        return new FileMetaData(self::$temp->pathname('shared-tools'));
     }
 }

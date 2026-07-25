@@ -100,43 +100,6 @@ class ToolClientsTest extends TestCase
         $this->assertData($expected, $clients);
     }
 
-    public function testUpdate_RemovesNotExistingLocations()
-    {
-        $clients = $this->clients([
-            'new.tool.1.2.3'         => ['some/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3'  => ['another/old/path', 'existing/path', 'some/path'],
-            'polymorphine.dev.0.6.0' => ['zzz/path'],
-            'zzold.tool.0.2.3'       => []
-        ], ['zzz/path', 'another/old/path']);
-        $clients->update(['new.tool.1.2.3', 'phpunit.phpunit.10.0.0'], 'some/path');
-        $expected = [
-            'new.tool.1.2.3'         => ['some/path'],
-            'phpunit.phpunit.10.0.0' => ['some/path'],
-            'phpunit.phpunit.9.6.3'  => ['existing/path'],
-            'polymorphine.dev.0.6.0' => [],
-            'zzold.tool.0.2.3'       => []
-        ];
-        $this->assertData($expected, $clients);
-    }
-
-    public function testUnusedTools_RemovesNotExistingLocations()
-    {
-        $clients = $this->clients([
-            'new.tool.1.2.3'         => ['some/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3'  => ['another/old/path', 'existing/path', 'some/path'],
-            'polymorphine.dev.0.6.0' => ['zzz/path'],
-            'zzold.tool.0.2.3'       => []
-        ], ['zzz/path', 'another/old/path']);
-        $expected = [
-            'new.tool.1.2.3'         => ['some/path'],
-            'phpunit.phpunit.9.6.3'  => ['existing/path', 'some/path'],
-            'polymorphine.dev.0.6.0' => [],
-            'zzold.tool.0.2.3'       => []
-        ];
-        $this->assertSame(['polymorphine.dev.0.6.0', 'zzold.tool.0.2.3'], $clients->unusedTools());
-        $this->assertData($expected, $clients);
-    }
-
     public function testRemovingTools()
     {
         $clients = $this->clients([
@@ -161,8 +124,8 @@ class ToolClientsTest extends TestCase
         $this->assertSame($expected, Data::$installations);
     }
 
-    private function clients(?array $installations = null, ?array $missingLocations = null): ToolClients
+    private function clients(?array $installations = null): ToolClients
     {
-        return new ToolClients(new Data($installations, $missingLocations));
+        return new ToolClients(new Data($installations));
     }
 }
