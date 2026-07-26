@@ -15,20 +15,18 @@ namespace Shudd3r\Toolshed;
 class ToolClients
 {
     private MetaData $data;
-    private array    $tracked;
-    private array    $updated;
+    private ?array   $toolRefs = null;
 
     public function __construct(MetaData $data)
     {
-        $this->data    = $data;
-        $this->tracked = $data->installations();
-        $this->updated = $this->tracked;
+        $this->data = $data;
     }
 
     public function update(array $toolVersions, string $clientBinDir): void
     {
+        $this->toolRefs ??= $this->data->installations();
         $clientBinDir = str_replace('\\', '/', $clientBinDir);
-        foreach ($this->updated as $packageVer => &$locations) {
+        foreach ($this->toolRefs as $packageVer => &$locations) {
             $toolFound = in_array($packageVer, $toolVersions, true);
             $pathFound = in_array($clientBinDir, $locations, true);
             if ($toolFound && !$pathFound) {
@@ -40,26 +38,28 @@ class ToolClients
         }
 
         foreach ($toolVersions as $packageVer) {
-            if (isset($this->updated[$packageVer])) { continue; }
-            $this->updated[$packageVer] = [$clientBinDir];
+            if (isset($this->toolRefs[$packageVer])) { continue; }
+            $this->toolRefs[$packageVer] = [$clientBinDir];
         }
 
-        ksort($this->updated);
+        ksort($this->toolRefs);
     }
 
     public function unusedTools(): array
     {
-        return array_keys(array_filter($this->updated, fn (array $locations) => $locations === []));
+        $this->toolRefs ??= $this->data->installations();
+        return array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
     }
 
     public function remove(string $tool): void
     {
-        unset($this->updated[$tool]);
+        $this->toolRefs ??= $this->data->installations();
+        unset($this->toolRefs[$tool]);
     }
 
     public function __destruct()
     {
-        if ($this->tracked === $this->updated) { return; }
-        $this->data->saveInstallations($this->updated);
+        if (!isset($this->toolRefs)) { return; }
+        $this->data->saveInstallations($this->toolRefs);
     }
 }

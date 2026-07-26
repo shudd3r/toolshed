@@ -69,9 +69,6 @@ class FileMetaDataTest extends TestCase
 
         $expected = ['foo.bar.1.2.3' => [self::$temp->directory('new/directory')]];
         $this->assertSame($expected, $data->installations());
-
-        $filename = self::$temp->pathname('shared-tools/install-locations.json');
-        $this->assertSame($expected, json_decode(file_get_contents($filename), true));
     }
 
     private function data(?array $fileContents = null): FileMetaData

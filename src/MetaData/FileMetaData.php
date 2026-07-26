@@ -17,6 +17,7 @@ use Shudd3r\Toolshed\MetaData;
 class FileMetaData implements MetaData
 {
     private string $toolsDirectory;
+    private ?array $toolClientRefs = null;
 
     public function __construct(string $toolsDirectory)
     {
@@ -26,25 +27,15 @@ class FileMetaData implements MetaData
     public function installations(): array
     {
         $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
-        $installations = is_file($installDataFile)
+        $this->toolClientRefs = is_file($installDataFile)
             ? json_decode(file_get_contents($installDataFile), true) ?? []
             : [];
-
-        $update = false;
-        foreach ($installations as &$locations) {
-            $remove = $this->missingLocations($locations);
-            if (!$remove) { continue; }
-            $locations = array_values(array_diff($locations, $remove));
-            $update    = true;
-        }
-
-        if ($update) { $this->saveInstallations($installations); }
-
-        return $installations;
+        return $this->existingInstallations($this->toolClientRefs);
     }
 
     public function saveInstallations(array $installations): void
     {
+        if ($installations === $this->toolClientRefs) { return; }
         if (!is_dir($this->toolsDirectory)) {
             mkdir($this->toolsDirectory, 0700);
         }
@@ -53,18 +44,14 @@ class FileMetaData implements MetaData
         file_put_contents($installDataFile, json_encode($installations, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
 
-    private function missingLocations(array $locations): array
+    private function existingInstallations(array $installations): array
     {
-        $missingLocations = [];
-        foreach ($locations as $location) {
-            if ($this->locationExists($location)) { continue; }
-            $missingLocations[] = $location;
+        foreach ($installations as &$locations) {
+            $remove = array_filter($locations, fn (string $location) => !is_dir($location));
+            if (!$remove) { continue; }
+            $locations = array_values(array_diff($locations, $remove));
         }
-        return $missingLocations;
-    }
 
-    private function locationExists(string $location): bool
-    {
-        return is_dir($location);
+        return $installations;
     }
 }
