@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed;
+namespace Shudd3r\Toolshed\Sync;
 
 
 class UsageRegistry

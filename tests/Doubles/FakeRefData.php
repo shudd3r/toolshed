@@ -11,7 +11,7 @@
 
 namespace Shudd3r\Toolshed\Tests\Doubles;
 
-use Shudd3r\Toolshed\RefData;
+use Shudd3r\Toolshed\Sync\RefData;
 
 
 class FakeRefData implements RefData

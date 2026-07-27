@@ -9,10 +9,10 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\RefData;
+namespace Shudd3r\Toolshed\Tests\Sync\RefData;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\RefData\FileRefData;
+use Shudd3r\Toolshed\Sync\RefData\FileRefData;
 use Shudd3r\Toolshed\Tests\Fixtures;
 
 

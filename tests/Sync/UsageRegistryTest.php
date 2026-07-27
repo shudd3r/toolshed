@@ -9,10 +9,10 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests;
+namespace Shudd3r\Toolshed\Tests\Sync;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\UsageRegistry;
+use Shudd3r\Toolshed\Sync\UsageRegistry;
 use Shudd3r\Toolshed\Tests\Doubles\FakeRefData as Data;
 
 

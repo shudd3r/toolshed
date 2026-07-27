@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\RefData;
+namespace Shudd3r\Toolshed\Sync\RefData;
 
-use Shudd3r\Toolshed\RefData;
+use Shudd3r\Toolshed\Sync\RefData;
 
 
 class FileRefData implements RefData
