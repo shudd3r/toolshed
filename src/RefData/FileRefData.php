@@ -9,12 +9,12 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\MetaData;
+namespace Shudd3r\Toolshed\RefData;
 
-use Shudd3r\Toolshed\MetaData;
+use Shudd3r\Toolshed\RefData;
 
 
-class FileMetaData implements MetaData
+class FileRefData implements RefData
 {
     private string $toolsDirectory;
     private ?array $toolClientRefs = null;
@@ -24,7 +24,7 @@ class FileMetaData implements MetaData
         $this->toolsDirectory = $toolsDirectory;
     }
 
-    public function installations(): array
+    public function toolRefs(): array
     {
         $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
         $this->toolClientRefs = is_file($installDataFile)
@@ -33,15 +33,15 @@ class FileMetaData implements MetaData
         return $this->existingInstallations($this->toolClientRefs);
     }
 
-    public function saveInstallations(array $installations): void
+    public function save(array $toolRefs): void
     {
-        if ($installations === $this->toolClientRefs) { return; }
+        if ($toolRefs === $this->toolClientRefs) { return; }
         if (!is_dir($this->toolsDirectory)) {
             mkdir($this->toolsDirectory, 0700);
         }
 
         $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
-        file_put_contents($installDataFile, json_encode($installations, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        file_put_contents($installDataFile, json_encode($toolRefs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
 
     private function existingInstallations(array $installations): array

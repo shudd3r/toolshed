@@ -12,19 +12,19 @@
 namespace Shudd3r\Toolshed;
 
 
-class ToolClients
+class UsageRegistry
 {
-    private MetaData $data;
-    private ?array   $toolRefs = null;
+    private RefData $refData;
+    private ?array  $toolRefs = null;
 
-    public function __construct(MetaData $data)
+    public function __construct(RefData $refData)
     {
-        $this->data = $data;
+        $this->refData = $refData;
     }
 
     public function update(array $toolVersions, string $clientBinDir): void
     {
-        $this->toolRefs ??= $this->data->installations();
+        $this->toolRefs ??= $this->refData->toolRefs();
         $clientBinDir = str_replace('\\', '/', $clientBinDir);
         foreach ($this->toolRefs as $packageVer => &$locations) {
             $toolFound = in_array($packageVer, $toolVersions, true);
@@ -47,19 +47,19 @@ class ToolClients
 
     public function unusedTools(): array
     {
-        $this->toolRefs ??= $this->data->installations();
+        $this->toolRefs ??= $this->refData->toolRefs();
         return array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
     }
 
     public function remove(string $tool): void
     {
-        $this->toolRefs ??= $this->data->installations();
+        $this->toolRefs ??= $this->refData->toolRefs();
         unset($this->toolRefs[$tool]);
     }
 
     public function __destruct()
     {
         if (!isset($this->toolRefs)) { return; }
-        $this->data->saveInstallations($this->toolRefs);
+        $this->refData->save($this->toolRefs);
     }
 }

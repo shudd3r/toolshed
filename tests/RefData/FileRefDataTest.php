@@ -9,14 +9,14 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\MetaData;
+namespace Shudd3r\Toolshed\Tests\RefData;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\MetaData\FileMetaData;
+use Shudd3r\Toolshed\RefData\FileRefData;
 use Shudd3r\Toolshed\Tests\Fixtures;
 
 
-class FileMetaDataTest extends TestCase
+class FileRefDataTest extends TestCase
 {
     private static Fixtures\TempFiles $temp;
 
@@ -30,34 +30,34 @@ class FileMetaDataTest extends TestCase
         self::$temp->clear();
     }
 
-    public function testInstallations_WhenMetaDataCannotBeRead_ReturnsEmptyArray()
+    public function testToolRefsMethod_WhenFileCannotBeRead_ReturnsEmptyArray()
     {
         $data = $this->data();
-        $this->assertEmpty($data->installations());
+        $this->assertEmpty($data->toolRefs());
 
         self::$temp->directory('shared-files');
-        $this->assertEmpty($data->installations());
+        $this->assertEmpty($data->toolRefs());
 
         self::$temp->file('shared-files/install-locations.json', '--- not json structure ---');
-        $this->assertEmpty($data->installations());
+        $this->assertEmpty($data->toolRefs());
     }
 
-    public function testInstallations_ForValidMetaDataSource_ReturnsDecodedJsonStructure()
+    public function testToolRefsMethod_ForValidDataFile_ReturnsDecodedJsonStructure()
     {
-        $file = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
-        $data = $this->data($file);
-        $this->assertSame($file, $data->installations());
+        $refs = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
+        $data = $this->data($refs);
+        $this->assertSame($refs, $data->toolRefs());
     }
 
-    public function testSaveInstallations_CreatesValidMetaData()
+    public function testSaveMethod_CreatesValidMetaData()
     {
         $data = $this->data();
-        $save = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
-        $data->saveInstallations($save);
-        $this->assertSame($save, $data->installations());
+        $refs = ['foo.bar.1.2.3' => [self::$temp->directory('some/directory')]];
+        $data->save($refs);
+        $this->assertSame($refs, $data->toolRefs());
     }
 
-    public function testNotExistingLocations_AreRemovedOnRead()
+    public function testNotExistingLocations_AreFilteredOnRead()
     {
         $locations = [
             self::$temp->directory('new/directory'),
@@ -68,15 +68,15 @@ class FileMetaDataTest extends TestCase
         $data = $this->data(['foo.bar.1.2.3' => $locations]);
 
         $expected = ['foo.bar.1.2.3' => [self::$temp->directory('new/directory')]];
-        $this->assertSame($expected, $data->installations());
+        $this->assertSame($expected, $data->toolRefs());
     }
 
-    private function data(?array $fileContents = null): FileMetaData
+    private function data(?array $fileContents = null): FileRefData
     {
         if ($fileContents !== null) {
             $contents = json_encode($fileContents, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
             self::$temp->file('shared-tools/install-locations.json', $contents);
         }
-        return new FileMetaData(self::$temp->pathname('shared-tools'));
+        return new FileRefData(self::$temp->pathname('shared-tools'));
     }
 }

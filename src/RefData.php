@@ -12,9 +12,11 @@
 namespace Shudd3r\Toolshed;
 
 
-interface MetaData
+interface RefData
 {
-    public function installations(): array;
+    /** @return array<string, array<string>> */
+    public function toolRefs(): array;
 
-    public function saveInstallations(array $installations): void;
+    /** @param array<string, array<string>> $toolRefs */
+    public function save(array $toolRefs): void;
 }
