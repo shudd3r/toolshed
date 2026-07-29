@@ -11,30 +11,37 @@
 
 namespace Shudd3r\Toolshed\Tools\Tool;
 
-use Composer\IO\IOInterface as Output;
 use Composer\Util\ProcessExecutor;
 
 
 class Composer
 {
-    private Output $output;
+    private string $toolsDir;
+    private string $output = '';
 
-    public function __construct(Output $output)
+    public function __construct(string $toolsDir)
     {
-        $this->output = $output;
+        $this->toolsDir = $toolsDir;
     }
 
-    public function execute(string $command, string $packageDir): string
+    public function install(Identifier $tool): int
     {
-        $command  = 'composer ' . $command . ' 2>&1';
-        $composer = new ProcessExecutor($this->output);
-        $status   = $composer->execute($command, $output, $packageDir);
+        $this->output = '';
+        $options  = $tool->isResolved() ? '' : '--dry-run --no-install ';
+        $command  = 'composer update ' . $options . '--no-progress 2>&1';
+        $composer = new ProcessExecutor();
+        $workDir  = $this->toolsDir . DIRECTORY_SEPARATOR . $tool;
 
-        if ($status) {
-            $this->output->writeError("<error>Command failed:</error>\n" . $output);
-            return '';
+        if (!is_dir($workDir)) {
+            $this->output = 'Tool directory does not exist';
+            return 1;
         }
 
-        return $output;
+        return $composer->execute($command, $this->output, $workDir);
+    }
+
+    public function output(): string
+    {
+        return $this->output;
     }
 }

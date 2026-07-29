@@ -13,7 +13,7 @@ namespace Shudd3r\Toolshed\Tests\Tools\Tool;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Tools\Tool\Composer;
-use Shudd3r\Toolshed\Tests\Doubles\FakeIO;
+use Shudd3r\Toolshed\Tools\Tool\Identifier;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
@@ -31,21 +31,65 @@ class ComposerTest extends TestCase
         self::$temp->clear();
     }
 
-    public function testExecuteCommand_ReturnsOutput()
+    public function testInstall_ForNotExistingToolDirectory()
     {
-        $composer = new Composer(new FakeIO());
-        $result   = $composer->execute('--version', self::$temp->pathname(''));
-        $this->assertStringContainsString('Composer version', $result);
-        $this->assertStringContainsString('PHP version', $result);
+        $composer = $this->composer();
+        $tool     = Identifier::fromStrings('some/package', '^9.6');
+
+        $this->assertEquals(1, $composer->install($tool));
+        $this->assertEquals('Tool directory does not exist', $composer->output());
+        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.9.7.11/composer.lock'));
     }
 
-    public function testInvalidExecuteCommand_DisplaysError()
+    public function testInstall_ForDirectoryWithoutComposerJson()
     {
-        self::$temp->file('composer.json', '{}');
-        $output   = new FakeIO();
-        $composer = new Composer($output);
-        $result   = $composer->execute('not-a-command', self::$temp->pathname(''));
-        $this->assertEmpty($result);
-        $this->assertStringContainsString('Command "not-a-command" is not defined', $output->messages[0]);
+        $composer = $this->composer();
+        $tool     = Identifier::fromStrings('some/package', '9.7.11');
+
+        self::$temp->directory('some.package.9.7.11');
+
+        $this->assertEquals(1, $composer->install($tool));
+        $this->assertStringContainsString('No composer.json in current directory', $composer->output());
+        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.9.7.11/composer.lock'));
+    }
+
+    public function testInstall_ForUnresolvedToolVersion()
+    {
+        $composer = $this->composer();
+        $tool     = Identifier::fromStrings('some/package', '^9.6');
+
+        $packageJson = ['name' => 'some/package', 'description' => 'This is some package', 'version' => '9.7.3'];
+        self::$temp->file('repo/composer.json', $this->json($packageJson));
+        $composerJson = ['repositories' => [['type' => 'path', 'url' => '../repo']]] + $tool->composerRequire();
+        self::$temp->file('some.package.unresolved/composer.json', $this->json($composerJson));
+
+        $this->assertEquals(0, $composer->install($tool));
+        $this->assertStringContainsString('- Locking some/package (9.7.3)', $composer->output());
+        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.unresolved/composer.lock'));
+    }
+
+    public function testInstall_ForResolvedToolVersion()
+    {
+        $composer = $this->composer();
+        $tool     = Identifier::fromStrings('some/package', '9.7.11');
+
+        $packageJson = ['name' => 'some/package', 'description' => 'This is some package', 'version' => '9.7.11'];
+        self::$temp->file('repo/composer.json', $this->json($packageJson));
+        $composerJson = ['repositories' => [['type' => 'path', 'url' => '../repo']]] + $tool->composerRequire();
+        self::$temp->file('some.package.9.7.11/composer.json', $this->json($composerJson));
+
+        $this->assertEquals(0, $composer->install($tool));
+        $this->assertStringContainsString('- Locking some/package (9.7.11)', $composer->output());
+        $this->assertFileExists(self::$temp->pathname('some.package.9.7.11/composer.lock'));
+    }
+
+    private function composer(): Composer
+    {
+        return new Composer(self::$temp->pathname(''));
+    }
+
+    private function json(array $data): string
+    {
+        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 }
