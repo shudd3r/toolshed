@@ -30,7 +30,6 @@ class IdentifierTest extends TestCase
         $require = ['require' => ['vendor/package' => $version]];
         $this->assertSame($require, $id->composerRequire());
         $this->assertSame('vendor.package.' . $version, (string) $id);
-        $this->assertSame('vendor.package.' . $version, (string) Identifier::fromString((string) $id));
     }
 
     /** @dataProvider exactConstraints */
@@ -49,7 +48,6 @@ class IdentifierTest extends TestCase
         $require = ['require' => ['php' => '^7.4 || ^8.0', 'vendor/package' => $version]];
         $this->assertSame($require, $id->composerRequire());
         $this->assertSame('vendor.package.unresolved', (string) $id);
-        $this->assertSame('vendor.package.unresolved', (string) Identifier::fromString((string) $id));
         $this->assertEquals($this->id('1.2.3'), $id->resolvedTo(Identifier::parseConstraint('1.2.3')));
     }
 
@@ -73,7 +71,6 @@ class IdentifierTest extends TestCase
 
     private function id(string $version): Identifier
     {
-        self::$php ??= Identifier::parseConstraint('^7.4 || ^8.0');
-        return new Identifier('vendor/package', Identifier::parseConstraint($version), self::$php);
+        return Identifier::fromStrings('vendor/package', $version, '^7.4 || ^8.0');
     }
 }

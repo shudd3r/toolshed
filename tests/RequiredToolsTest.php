@@ -21,10 +21,9 @@ class RequiredToolsTest extends TestCase
     public function testInstanceDataMethods()
     {
         $packageBinDirectory = __DIR__;
-        $phpConstraint       = Identifier::parseConstraint('^7.4 || ^8.0');
         $toolIdentifiers = [
-            new Identifier('phpunit/phpunit', Identifier::parseConstraint('^9.5'), $phpConstraint),
-            new Identifier('polymorphine/dev', Identifier::parseConstraint('0.6.0'), $phpConstraint)
+            Identifier::fromStrings('phpunit/phpunit', '^9.5', '^7.4 || ^8.0'),
+            Identifier::fromStrings('polymorphine/dev', '0.6.0')
         ];
 
         $tools = new RequiredTools($packageBinDirectory, $toolIdentifiers);

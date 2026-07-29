@@ -24,7 +24,7 @@ class FakeTool implements Tool
 
     public function __construct(?Tool\Identifier $identifier = null, array $binaries = [])
     {
-        $this->identifier = $identifier ?? Tool\Identifier::fromString('vendor.package.unresolved');
+        $this->identifier = $identifier ?? Tool\Identifier::fromStrings('vendor/package');
         $this->binaries   = $binaries;
     }
 
