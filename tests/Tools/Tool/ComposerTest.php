@@ -14,6 +14,7 @@ namespace Shudd3r\Toolshed\Tests\Tools\Tool;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Tools\Tool\Composer;
 use Shudd3r\Toolshed\Tools\Tool\Identifier;
+use Shudd3r\Toolshed\Tests\Doubles\FakeProcessExecutor;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
@@ -31,65 +32,52 @@ class ComposerTest extends TestCase
         self::$temp->clear();
     }
 
-    public function testInstall_ForNotExistingToolDirectory()
+    public function testInstall_ForInvalidToolDirectory_ReturnsErrorCode()
     {
-        $composer = $this->composer();
-        $tool     = Identifier::fromStrings('some/package', '^9.6');
-
-        $this->assertEquals(1, $composer->install($tool));
-        $this->assertEquals('Tool directory does not exist', $composer->output());
-        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.9.7.11/composer.lock'));
-    }
-
-    public function testInstall_ForDirectoryWithoutComposerJson()
-    {
-        $composer = $this->composer();
-        $tool     = Identifier::fromStrings('some/package', '9.7.11');
-
         self::$temp->directory('some.package.9.7.11');
+        $composer = $this->composer();
 
+        $tool = Identifier::fromStrings('some/package', '^9.6');
         $this->assertEquals(1, $composer->install($tool));
-        $this->assertStringContainsString('No composer.json in current directory', $composer->output());
-        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.9.7.11/composer.lock'));
+        $expectedOutput = 'Tool directory `some.package.unresolved` does not exist';
+        $this->assertEquals($expectedOutput, $composer->output());
+
+        $tool = Identifier::fromStrings('some/package', '9.7.11');
+        $this->assertEquals(1, $composer->install($tool));
+        $expectedOutput = 'No composer.json in `some.package.9.7.11` tool directory';
+        $this->assertEquals($expectedOutput, $composer->output());
     }
 
     public function testInstall_ForUnresolvedToolVersion()
     {
-        $composer = $this->composer();
-        $tool     = Identifier::fromStrings('some/package', '^9.6');
+        self::$temp->file('test.package.unresolved/composer.json', '{}');
+        $processor = new FakeProcessExecutor();
+        $composer  = $this->composer($processor);
 
-        $packageJson = ['name' => 'some/package', 'description' => 'This is some package', 'version' => '9.7.3'];
-        self::$temp->file('repo/composer.json', $this->json($packageJson));
-        $composerJson = ['repositories' => [['type' => 'path', 'url' => '../repo']]] + $tool->composerRequire();
-        self::$temp->file('some.package.unresolved/composer.json', $this->json($composerJson));
-
+        $tool = Identifier::fromStrings('test/package', '^9.6');
         $this->assertEquals(0, $composer->install($tool));
-        $this->assertStringContainsString('- Locking some/package (9.7.3)', $composer->output());
-        $this->assertFileDoesNotExist(self::$temp->pathname('some.package.unresolved/composer.lock'));
+        $expectedOutput = '- Locking test/package (9.10.11)';
+        $this->assertStringContainsString($expectedOutput, $composer->output());
+        $expectedCommand = 'composer update --dry-run --no-install --no-progress 2>&1';
+        $this->assertSame($expectedCommand, $processor->command);
     }
 
     public function testInstall_ForResolvedToolVersion()
     {
-        $composer = $this->composer();
-        $tool     = Identifier::fromStrings('some/package', '9.7.11');
+        self::$temp->file('test.package.9.7.11/composer.json', '{}');
+        $processor = new FakeProcessExecutor();
+        $composer  = $this->composer($processor);
 
-        $packageJson = ['name' => 'some/package', 'description' => 'This is some package', 'version' => '9.7.11'];
-        self::$temp->file('repo/composer.json', $this->json($packageJson));
-        $composerJson = ['repositories' => [['type' => 'path', 'url' => '../repo']]] + $tool->composerRequire();
-        self::$temp->file('some.package.9.7.11/composer.json', $this->json($composerJson));
-
+        $tool = Identifier::fromStrings('test/package', '9.7.11');
         $this->assertEquals(0, $composer->install($tool));
-        $this->assertStringContainsString('- Locking some/package (9.7.11)', $composer->output());
-        $this->assertFileExists(self::$temp->pathname('some.package.9.7.11/composer.lock'));
+        $expectedOutput = '- Locking test/package (9.10.11)';
+        $this->assertStringContainsString($expectedOutput, $composer->output());
+        $expectedCommand = 'composer update --no-progress 2>&1';
+        $this->assertSame($expectedCommand, $processor->command);
     }
 
-    private function composer(): Composer
+    private function composer(?FakeProcessExecutor &$processor = null): Composer
     {
-        return new Composer(self::$temp->pathname(''));
-    }
-
-    private function json(array $data): string
-    {
-        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return new Composer($processor ??= new FakeProcessExecutor(), self::$temp->pathname(''));
     }
 }

@@ -16,32 +16,46 @@ use Composer\Util\ProcessExecutor;
 
 class Composer
 {
-    private string $toolsDir;
-    private string $output = '';
+    private ProcessExecutor $processor;
+    private string          $toolsDir;
+    private string          $output = '';
 
-    public function __construct(string $toolsDir)
+    public function __construct(ProcessExecutor $processor, string $toolsDir)
     {
-        $this->toolsDir = $toolsDir;
+        $this->processor = $processor;
+        $this->toolsDir  = $toolsDir;
     }
 
     public function install(Identifier $tool): int
     {
         $this->output = '';
-        $options  = $tool->isResolved() ? '' : '--dry-run --no-install ';
-        $command  = 'composer update ' . $options . '--no-progress 2>&1';
-        $composer = new ProcessExecutor();
-        $workDir  = $this->toolsDir . DIRECTORY_SEPARATOR . $tool;
 
-        if (!is_dir($workDir)) {
-            $this->output = 'Tool directory does not exist';
-            return 1;
-        }
+        $options = $tool->isResolved() ? '' : '--dry-run --no-install ';
+        $command = 'composer update ' . $options . '--no-progress 2>&1';
+        $workDir = $this->validWorkDir($tool);
 
-        return $composer->execute($command, $this->output, $workDir);
+        return $workDir ? $this->processor->execute($command, $this->output, $workDir) : 1;
     }
 
     public function output(): string
     {
         return $this->output;
+    }
+
+    private function validWorkDir(Identifier $tool): ?string
+    {
+        $workDir = $this->toolsDir . DIRECTORY_SEPARATOR . $tool;
+
+        if (!is_dir($workDir)) {
+            $this->output = sprintf('Tool directory `%s` does not exist', $tool);
+            return null;
+        }
+
+        if (!is_file($workDir . DIRECTORY_SEPARATOR . 'composer.json')) {
+            $this->output = sprintf('No composer.json in `%s` tool directory', $tool);
+            return null;
+        }
+
+        return $workDir;
     }
 }
