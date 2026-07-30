@@ -11,10 +11,12 @@
 
 namespace Shudd3r\Toolshed\Filesystem;
 
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
 use FilesystemIterator;
-use Traversable;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use CallbackFilterIterator;
+use Generator;
+use Iterator;
 
 
 class Directory extends Node
@@ -52,6 +54,30 @@ class Directory extends Node
         is_dir($this->pathname) || mkdir($this->pathname, 0700, true);
     }
 
+    /** @param callable|null $filter fn(string) => bool */
+    public function files(bool $isRecursive = false, ?callable $filter = null): Generator
+    {
+        $filter ??= static fn (string $pathname): bool => true;
+        $mainFilter = fn (string $pathname): bool => is_file($pathname) && $filter($pathname);
+        $filenames  = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
+
+        foreach ($filenames as $pathname) {
+            yield new File($pathname);
+        }
+    }
+
+    /** @param callable|null $filter fn(string) => bool */
+    public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
+    {
+        $filter ??= static fn (string $pathname): bool => true;
+        $mainFilter  = static fn (string $pathname): bool => is_dir($pathname) && $filter($pathname);
+        $directories = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
+
+        foreach ($directories as $pathname) {
+            yield new Directory($pathname);
+        }
+    }
+
     public function subdirectory(string $name): Directory
     {
         return new self($this->pathname($name));
@@ -69,17 +95,20 @@ class Directory extends Node
             throw new FilesystemException('Cannot remove root directory');
         }
 
-        foreach ($this->nodes() as $nodePath) {
+        foreach ($this->nodes(true) as $nodePath) {
             $this->removeLeafNode($nodePath);
         }
 
         rmdir($this->pathname);
     }
 
-    protected function nodes(): Traversable
+    protected function nodes(bool $isRecursive): Iterator
     {
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->pathname, $flags);
-        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        if ($isRecursive) {
+            $nodes = new RecursiveDirectoryIterator($this->pathname, $flags);
+            return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        }
+        return new FilesystemIterator($this->pathname, $flags);
     }
 }

@@ -144,8 +144,58 @@ class FilesystemTest extends TestCase
         $root->remove();
     }
 
+    public function testNodeIteration()
+    {
+        $root = $this->root();
+        $root->file('foo/bar/baz1.txt')->write('contents');
+        $root->file('bar/baz2.txt')->write('contents');
+        $root->subdirectory('foo/bar/baz')->create();
+        $root->file('root-file')->write('contents');
+
+        $this->assertNodes(fn () => $root->files(), [
+            $root->file('root-file')
+        ]);
+
+        $this->assertNodes(fn () => $root->files(true), [
+            $root->file('bar/baz2.txt'),
+            $root->file('foo/bar/baz1.txt'),
+            $root->file('root-file')
+        ]);
+
+        $txtOnly = fn (string $pathname): bool => str_ends_with($pathname, '.txt');
+        $this->assertNodes(fn () => $root->files(true, $txtOnly), [
+            $root->file('bar/baz2.txt'),
+            $root->file('foo/bar/baz1.txt')
+        ]);
+
+        $this->assertNodes(fn () => $root->subdirectories(), [
+            $root->subdirectory('bar'),
+            $root->subdirectory('foo')
+        ]);
+
+        $this->assertNodes(fn () => $root->subdirectories(true), [
+            $root->subdirectory('bar'),
+            $root->subdirectory('foo/bar/baz'),
+            $root->subdirectory('foo/bar'),
+            $root->subdirectory('foo')
+        ]);
+
+        $barBasename = fn (string $pathname): bool => basename($pathname) === 'bar';
+        $this->assertNodes(fn () => $root->subdirectories(true, $barBasename), [
+            $root->subdirectory('bar'),
+            $root->subdirectory('foo/bar')
+        ]);
+    }
+
+    private function assertNodes(callable $nodesGenerator, array $nodeList)
+    {
+        foreach ($nodesGenerator() as $node) {
+            $this->assertContainsEquals($node, $nodeList);
+        }
+    }
+
     private function root(): Directory
     {
-        return Directory::root(self::$temp->directory(''));
+        return Directory::root(self::$temp->directory());
     }
 }
