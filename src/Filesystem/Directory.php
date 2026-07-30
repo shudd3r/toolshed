@@ -17,87 +17,69 @@ use FilesystemIterator;
 use Traversable;
 
 
-class Directory
+class Directory extends Node
 {
-    private string $rootPath;
-
-    public function __construct(string $rootPath)
+    public static function root(string $rootPath): self
     {
-        $this->rootPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $rootPath);
+        $rootPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $rootPath);
+        if (!is_dir($rootPath)) {
+            throw new FilesystemException(sprintf('Root path does not exist `%s`', $rootPath));
+        }
+        return new self($rootPath, true);
     }
 
-    public function isFile(string $name): bool
+    private bool $isRoot;
+
+    public function __construct(string $rootPath, bool $isRoot = false)
     {
-        return is_file($this->pathname($name));
+        $this->isRoot = $isRoot;
+        parent::__construct($rootPath);
     }
 
-    public function isDir(string $name = ''): bool
+    public function exists(): bool
     {
-        return is_dir($this->pathname($name));
+        return is_dir($this->pathname);
     }
 
     /** @throws FilesystemException */
-    public function createSubdirectory(string $name): void
+    public function create(): void
     {
-        $pathname = $this->pathname($name);
-        if (is_file($pathname)) {
-            $message = 'Cannot create `%s` directory. File of this name already exists: `%s`';
-            throw new FilesystemException(sprintf($message, $name, $pathname));
+        if ($this->exists()) { return; }
+        if (is_file($this->pathname)) {
+            $message = 'Cannot create directory `%s`';
+            throw new FilesystemException(sprintf($message, $this->pathname));
         }
-        is_dir($pathname) || mkdir($this->pathname($name), 0700, true);
+        is_dir($this->pathname) || mkdir($this->pathname, 0700, true);
     }
 
-    /** @throws FilesystemException */
-    public function fileWrite(string $name, string $contents): void
+    public function subdirectory(string $name): Directory
     {
-        $pathname = $this->pathname($name);
-        if (is_dir($pathname)) {
-            $message = 'Cannot create `%s` file. Directory of this name already exists: `%s`';
-            throw new FilesystemException(sprintf($message, $name, $pathname));
-        }
-        is_dir(dirname($pathname)) || mkdir(dirname($pathname), 0700, true);
-        file_put_contents($pathname, $contents);
+        return new self($this->pathname($name));
     }
 
-    public function fileContents(string $name): string
+    public function file(string $name): File
     {
-        $pathname = $this->pathname($name);
-        return is_file($pathname) ? file_get_contents($pathname) : '';
+        return new File($this->pathname($name));
     }
 
-    public function pathname(string $name = ''): string
+    public function remove(): void
     {
-        if (empty($name)) { return $this->rootPath; }
-        $relative = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $name);
-        return $this->rootPath . DIRECTORY_SEPARATOR . $relative;
-    }
-
-    public function remove(string $name = ''): void
-    {
-        $pathname = $this->pathname($name);
-        if (is_file($pathname)) {
-            $this->removeLeafNode($pathname);
-            return;
+        if (!$this->exists()) { return; }
+        if ($this->isRoot) {
+            throw new FilesystemException('Cannot remove root directory');
         }
 
-        if (!is_dir($pathname)) { return; }
-        foreach ($this->directoryNodes($pathname) as $nodePath) {
+        foreach ($this->nodes() as $nodePath) {
             $this->removeLeafNode($nodePath);
         }
-        rmdir($pathname);
+
+        rmdir($this->pathname);
     }
 
-    private function directoryNodes(string $pathname): Traversable
+    protected function nodes(): Traversable
     {
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($pathname, $flags);
+        $nodes = new RecursiveDirectoryIterator($this->pathname, $flags);
         return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-    }
-
-    private function removeLeafNode(string $pathname): void
-    {
-        $isWinOS = DIRECTORY_SEPARATOR === '\\';
-        $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
-        $isFile ? unlink($pathname) : rmdir($pathname);
     }
 }
