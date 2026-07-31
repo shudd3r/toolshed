@@ -27,15 +27,12 @@ class Directory extends Node
         if (!is_dir($rootPath)) {
             throw new FilesystemException(sprintf('Root path does not exist `%s`', $rootPath));
         }
-        return new self($rootPath, true);
+        return new self($rootPath, strlen($rootPath));
     }
 
-    private bool $isRoot;
-
-    public function __construct(string $rootPath, bool $isRoot = false)
+    public function name(): string
     {
-        $this->isRoot = $isRoot;
-        parent::__construct($rootPath);
+        return $this->isRoot() ? '.' : parent::name();
     }
 
     public function exists(): bool
@@ -62,7 +59,7 @@ class Directory extends Node
         $filenames  = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
 
         foreach ($filenames as $pathname) {
-            yield new File($pathname);
+            yield new File($pathname, $this->rootLength);
         }
     }
 
@@ -74,24 +71,24 @@ class Directory extends Node
         $directories = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
 
         foreach ($directories as $pathname) {
-            yield new Directory($pathname);
+            yield new Directory($pathname, $this->rootLength);
         }
     }
 
     public function subdirectory(string $name): Directory
     {
-        return new self($this->pathname($name));
+        return new self($this->pathname($name), $this->rootLength);
     }
 
     public function file(string $name): File
     {
-        return new File($this->pathname($name));
+        return new File($this->pathname($name), $this->rootLength);
     }
 
     public function remove(): void
     {
         if (!$this->exists()) { return; }
-        if ($this->isRoot) {
+        if ($this->isRoot()) {
             throw new FilesystemException('Cannot remove root directory');
         }
 
@@ -110,5 +107,10 @@ class Directory extends Node
             return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
         }
         return new FilesystemIterator($this->pathname, $flags);
+    }
+
+    private function isRoot(): bool
+    {
+        return strlen($this->pathname) === $this->rootLength;
     }
 }

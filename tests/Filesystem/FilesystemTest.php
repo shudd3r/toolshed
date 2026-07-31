@@ -56,6 +56,15 @@ class FilesystemTest extends TestCase
         $this->assertSame(self::$temp->pathname('foo/bar/baz.txt'), (string) $root->file('foo/bar/baz.txt'));
     }
 
+    public function testName_ReturnsPathnameRelativeToRootDirectory()
+    {
+        $root = $this->root();
+        $this->assertSame('.', $root->name());
+        $this->assertSame('foo', $root->subdirectory('foo')->name());
+        $this->assertSame('foo/bar/baz.txt', $root->file('foo/bar/baz.txt')->name());
+        $this->assertSame('foo/bar/baz.txt', $root->subdirectory('foo/bar')->file('baz.txt')->name());
+    }
+
     public function testCheckingIfDirectoryNodeExists()
     {
         $root = $this->root();

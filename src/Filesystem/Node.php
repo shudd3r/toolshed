@@ -15,15 +15,22 @@ namespace Shudd3r\Toolshed\Filesystem;
 abstract class Node
 {
     protected string $pathname;
+    protected int    $rootLength;
 
-    protected function __construct(string $pathname)
+    protected function __construct(string $pathname, int $rootLength)
     {
-        $this->pathname = $pathname;
+        $this->pathname   = $pathname;
+        $this->rootLength = $rootLength;
     }
 
     public function __toString(): string
     {
         return $this->pathname;
+    }
+
+    public function name(): string
+    {
+        return str_replace('\\', '/', substr($this->pathname, $this->rootLength + 1));
     }
 
     abstract public function exists(): bool;
