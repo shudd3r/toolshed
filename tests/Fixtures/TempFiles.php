@@ -15,6 +15,7 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
 use Traversable;
+use RuntimeException;
 
 
 class TempFiles
@@ -56,6 +57,29 @@ class TempFiles
             mkdir($directory, 0700, true);
         }
         return $directory;
+    }
+
+    public function symlink(string $target, string $name): string
+    {
+        $targetPath = $this->pathname($target);
+        $remove     = [];
+        while (!file_exists($targetPath)) {
+            $remove[] = $targetPath;
+            $targetPath = dirname($targetPath);
+        }
+
+        $remove && $targetPath = $this->file($target);
+        $this->directory($this->relative(dirname($name)));
+
+        if (!@symlink($targetPath, $name = $this->pathname($name))) {
+            throw new RuntimeException(sprintf('Failed creating symlink in `%s` to `%s`', $name, $targetPath));
+        }
+
+        foreach ($remove as $path) {
+            $this->remove($path);
+        }
+
+        return $name;
     }
 
     public function remove(string $pathname): void

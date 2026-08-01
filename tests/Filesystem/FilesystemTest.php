@@ -137,13 +137,17 @@ class FilesystemTest extends TestCase
         $root->file('foo/bar.file')->write('contents');
         $root->file('foo/empty/baz.txt')->write('contents');
 
+        self::$temp->symlink('foo/empty/baz.txt', 'foo/no.target.symlink');
         $file = $root->file('foo/empty/baz.txt');
         $this->assertFileExists((string) $file);
         $file->remove();
         $this->assertFileDoesNotExist((string) $file);
 
-        $root->subdirectory('foo')->remove();
-        $this->assertDirectoryDoesNotExist((string) $root->subdirectory('foo'));
+        self::$temp->symlink('foo/bar', 'foo/aaa.valid.symlink');
+        self::$temp->symlink('foo/bar', 'foo/zzz.stale.symlink');
+        $subdirectory = $root->subdirectory('foo');
+        $subdirectory->remove();
+        $this->assertDirectoryDoesNotExist((string) $subdirectory);
     }
 
     public function testRemovingRootDirectory_ThrowsException()

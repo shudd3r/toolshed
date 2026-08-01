@@ -48,6 +48,17 @@ abstract class Node
     {
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
         $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
+
+        $isStaleWindowsLink = !$isFile && !is_dir($pathname);
+        if ($isStaleWindowsLink) {
+            // @codeCoverageIgnoreStart
+            // On Windows it can't be determined which method should be
+            // used to remove links without existing target
+            @unlink($pathname) || rmdir($pathname);
+            return;
+            // @codeCoverageIgnoreEnd
+        }
+
         $isFile ? unlink($pathname) : rmdir($pathname);
     }
 }
