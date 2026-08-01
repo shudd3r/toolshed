@@ -45,12 +45,11 @@ class LocalDirectory extends LocalNode implements Directory
     /** @throws Exception\FilesystemException */
     public function create(): void
     {
-        if ($this->exists()) { return; }
         if (is_file($this->pathname)) {
             $message = 'Cannot create directory `%s`';
             throw new Exception\FilesystemException(sprintf($message, $this->pathname));
         }
-        is_dir($this->pathname) || mkdir($this->pathname, 0700, true);
+        $this->exists() || mkdir($this->pathname, 0700, true);
     }
 
     public function file(string $name): LocalFile
