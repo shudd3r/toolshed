@@ -9,16 +9,16 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\Filesystem;
+namespace Shudd3r\Toolshed\Tests\Filesystem\Local;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Filesystem\Directory;
-use Shudd3r\Toolshed\Filesystem\File;
-use Shudd3r\Toolshed\Filesystem\FilesystemException;
+use Shudd3r\Toolshed\Filesystem\Local\LocalDirectory;
+use Shudd3r\Toolshed\Filesystem\Local\LocalFile;
+use Shudd3r\Toolshed\Filesystem\Exception;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
-class FilesystemTest extends TestCase
+class LocalFilesystemTest extends TestCase
 {
     private static TempFiles $temp;
 
@@ -34,17 +34,17 @@ class FilesystemTest extends TestCase
 
     public function testNotExistingRootDirectory_ThrowsException()
     {
-        $this->expectException(FilesystemException::class);
-        Directory::root(self::$temp->pathname('notExists'));
+        $this->expectException(Exception\FilesystemException::class);
+        LocalDirectory::root(self::$temp->pathname('notExists'));
     }
 
     public function testNodeInstantiations()
     {
         $root = $this->root();
-        $this->assertInstanceOf(Directory::class, $subdirectory = $root->subdirectory('foo/bar'));
+        $this->assertInstanceOf(LocalDirectory::class, $subdirectory = $root->subdirectory('foo/bar'));
         $this->assertEquals($subdirectory, $root->subdirectory('foo')->subdirectory('bar'));
 
-        $this->assertInstanceOf(File::class, $file = $root->file('foo/bar/baz.txt'));
+        $this->assertInstanceOf(LocalFile::class, $file = $root->file('foo/bar/baz.txt'));
         $this->assertEquals($file, $subdirectory->file('baz.txt'));
     }
 
@@ -102,7 +102,7 @@ class FilesystemTest extends TestCase
     /** @dataProvider invalidNames */
     public function testInstantiatingNodeWithInvalidName_ThrowsException(string $invalidName)
     {
-        $this->expectException(FilesystemException::class);
+        $this->expectException(Exception\FilesystemException::class);
         $this->root()->subdirectory($invalidName);
     }
 
@@ -111,7 +111,7 @@ class FilesystemTest extends TestCase
         $root = $this->root();
         $root->file('foo/bar')->write('contents');
         $subdirectory = $root->subdirectory('foo/bar');
-        $this->expectException(FilesystemException::class);
+        $this->expectException(Exception\FilesystemException::class);
         $subdirectory->create();
     }
 
@@ -120,7 +120,7 @@ class FilesystemTest extends TestCase
         $root = $this->root();
         $root->subdirectory('foo/bar')->create();
         $file = $root->file('foo/bar');
-        $this->expectException(FilesystemException::class);
+        $this->expectException(Exception\FilesystemException::class);
         $file->write('contents');
     }
 
@@ -159,9 +159,8 @@ class FilesystemTest extends TestCase
 
     public function testRemovingRootDirectory_ThrowsException()
     {
-        $root = $this->root();
-        $this->expectException(FilesystemException::class);
-        $root->remove();
+        $this->expectException(Exception\FilesystemException::class);
+        $this->root()->remove();
     }
 
     public function testNodeIteration()
@@ -226,8 +225,8 @@ class FilesystemTest extends TestCase
         }
     }
 
-    private function root(): Directory
+    private function root(): LocalDirectory
     {
-        return Directory::root(self::$temp->directory());
+        return LocalDirectory::root(self::$temp->directory());
     }
 }

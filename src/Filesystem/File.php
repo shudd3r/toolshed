@@ -12,32 +12,10 @@
 namespace Shudd3r\Toolshed\Filesystem;
 
 
-class File extends Node
+interface File extends Node
 {
-    public function exists(): bool
-    {
-        return is_file($this->pathname);
-    }
+    public function contents(): string;
 
-    /** @throws FilesystemException */
-    public function write(string $contents): void
-    {
-        if (is_dir($this->pathname) || ($this->exists() && !is_writable($this->pathname))) {
-            $message = 'Cannot write to file `%s`';
-            throw new FilesystemException(sprintf($message, $this->pathname));
-        }
-
-        is_dir(dirname($this->pathname)) || mkdir(dirname($this->pathname), 0700, true);
-        file_put_contents($this->pathname, $contents);
-    }
-
-    public function contents(): string
-    {
-        return $this->exists() ? file_get_contents($this->pathname) : '';
-    }
-
-    public function remove(): void
-    {
-        $this->exists() && $this->removeLeafNode($this->pathname);
-    }
+    /** @throws Exception\FilesystemException */
+    public function write(string $contents): void;
 }

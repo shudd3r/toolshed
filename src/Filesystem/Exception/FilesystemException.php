@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Filesystem;
+namespace Shudd3r\Toolshed\Filesystem\Exception;
 
 use Exception;
 

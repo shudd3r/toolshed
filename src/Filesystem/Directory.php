@@ -11,128 +11,21 @@
 
 namespace Shudd3r\Toolshed\Filesystem;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use CallbackFilterIterator;
 use Generator;
-use Iterator;
 
 
-class Directory extends Node
+interface Directory extends Node
 {
-    public static function root(string $rootPath): self
-    {
-        $rootPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $rootPath);
-        if (!is_dir($rootPath)) {
-            throw new FilesystemException(sprintf('Root path does not exist `%s`', $rootPath));
-        }
-        return new self($rootPath, strlen($rootPath));
-    }
+    /** @throws Exception\FilesystemException */
+    public function create(): void;
 
-    public function name(): string
-    {
-        return $this->isRoot() ? '.' : parent::name();
-    }
+    public function file(string $name): File;
 
-    public function exists(): bool
-    {
-        return is_dir($this->pathname);
-    }
-
-    /** @throws FilesystemException */
-    public function create(): void
-    {
-        if ($this->exists()) { return; }
-        if (is_file($this->pathname)) {
-            $message = 'Cannot create directory `%s`';
-            throw new FilesystemException(sprintf($message, $this->pathname));
-        }
-        is_dir($this->pathname) || mkdir($this->pathname, 0700, true);
-    }
+    public function subdirectory(string $name): Directory;
 
     /** @param callable|null $filter fn(string) => bool */
-    public function files(bool $isRecursive = false, ?callable $filter = null): Generator
-    {
-        $filter ??= static fn (string $pathname): bool => true;
-        $mainFilter = fn (string $pathname): bool => is_file($pathname) && $filter($pathname);
-        $filenames  = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
-
-        foreach ($filenames as $pathname) {
-            yield new File($pathname, $this->rootLength);
-        }
-    }
+    public function files(bool $isRecursive = false, ?callable $filter = null): Generator;
 
     /** @param callable|null $filter fn(string) => bool */
-    public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
-    {
-        $filter ??= static fn (string $pathname): bool => true;
-        $mainFilter  = static fn (string $pathname): bool => is_dir($pathname) && $filter($pathname);
-        $directories = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
-
-        foreach ($directories as $pathname) {
-            yield new Directory($pathname, $this->rootLength);
-        }
-    }
-
-    public function subdirectory(string $name): Directory
-    {
-        return new self($this->pathname($name), $this->rootLength);
-    }
-
-    public function file(string $name): File
-    {
-        return new File($this->pathname($name), $this->rootLength);
-    }
-
-    public function remove(): void
-    {
-        if (!$this->exists()) { return; }
-        if ($this->isRoot()) {
-            throw new FilesystemException('Cannot remove root directory');
-        }
-
-        foreach ($this->nodes(true) as $nodePath) {
-            $this->removeLeafNode($nodePath);
-        }
-
-        rmdir($this->pathname);
-    }
-
-    protected function nodes(bool $isRecursive): Iterator
-    {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        if ($isRecursive) {
-            $nodes = new RecursiveDirectoryIterator($this->pathname, $flags);
-            return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-        }
-        return new FilesystemIterator($this->pathname, $flags);
-    }
-
-    private function isRoot(): bool
-    {
-        return strlen($this->pathname) === $this->rootLength;
-    }
-
-    private function pathname(string $name): string
-    {
-        $relative = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
-        if (!$this->isValid($relative)) {
-            throw new FilesystemException(sprintf('Cannot create node with name `%s`', $name));
-        }
-
-        return $this->pathname . DIRECTORY_SEPARATOR . $relative;
-    }
-
-    private function isValid(string $name): bool
-    {
-        if (empty($name)) { return false; }
-        $segments = explode(DIRECTORY_SEPARATOR, $name);
-        foreach ($segments as $segment) {
-            $isDotOnly = trim($segment, '.') === '';
-            $isTrimmed = trim($segment) === $segment;
-            if ($isDotOnly || !$isTrimmed) { return false; }
-        }
-        return true;
-    }
+    public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator;
 }
