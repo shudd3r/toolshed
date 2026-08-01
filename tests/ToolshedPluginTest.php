@@ -110,16 +110,12 @@ class ToolshedPluginTest extends TestCase
         $this->assertSame(['Activating'], $io->messages);
     }
 
-    public function nonInstallCommands(): array
+    public static function nonInstallCommands(): array
     {
-        return [
-            ['non-install', false],
-            ['install', true],
-            ['update', true]
-        ];
+        return [['non-install', false], ['install', true], ['update', true]];
     }
 
-    public function installCommands(): array
+    public static function installCommands(): array
     {
         return [['install'], ['update']];
     }
