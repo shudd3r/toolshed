@@ -81,7 +81,7 @@ class FilesystemTest extends TestCase
         $this->assertFalse($root->subdirectory('some/name')->exists());
     }
 
-    public function testCreatingNodes()
+    public function testInstantiatingNodes()
     {
         $root = $this->root();
 
@@ -89,14 +89,21 @@ class FilesystemTest extends TestCase
         $this->assertDirectoryDoesNotExist((string) $subdirectory);
 
         $subdirectory->create();
-        $this->assertDirectoryExists((string) $root->subdirectory('foo'));
+        $this->assertDirectoryExists((string) $root->subdirectory('foo\\'));
         $this->assertDirectoryExists((string) $root->subdirectory('foo/bar'));
         $this->assertFileDoesNotExist((string) $root->file('foo/bar/baz.txt'));
 
         $root->file('foo/bar/baz.txt')->write('contents');
-        $this->assertFileExists((string) $root->file('foo/bar/baz.txt'));
+        $this->assertFileExists((string) $root->file('\\foo/bar/baz.txt'));
         $root->file('new/path/file.txt')->write('contents');
-        $this->assertFileExists((string) $root->file('new/path/file.txt'));
+        $this->assertFileExists((string) $root->file('new/path/file.txt/'));
+    }
+
+    /** @dataProvider invalidNames */
+    public function testInstantiatingNodeWithInvalidName_ThrowsException(string $invalidName)
+    {
+        $this->expectException(FilesystemException::class);
+        $this->root()->subdirectory($invalidName);
     }
 
     public function testCreatingInvalidDirectoryNode_ThrowsException()
@@ -198,6 +205,18 @@ class FilesystemTest extends TestCase
             $root->subdirectory('bar'),
             $root->subdirectory('foo/bar')
         ]);
+    }
+
+    public static function invalidNames(): array
+    {
+        return [
+            'empty'       => [''],
+            'dot segment' => ['./dot/segment'],
+            'double dot'  => ['foo/../../bar'],
+            'more dots'   => ['foo/..../bar'],
+            'untrimmed1'  => ['foo  /bar'],
+            'untrimmed2'  => ['foo/bar   ']
+        ];
     }
 
     private function assertNodes(callable $nodesGenerator, array $nodeList)

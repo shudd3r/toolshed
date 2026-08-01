@@ -113,4 +113,26 @@ class Directory extends Node
     {
         return strlen($this->pathname) === $this->rootLength;
     }
+
+    private function pathname(string $name): string
+    {
+        $relative = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
+        if (!$this->isValid($relative)) {
+            throw new FilesystemException(sprintf('Cannot create node with name `%s`', $name));
+        }
+
+        return $this->pathname . DIRECTORY_SEPARATOR . $relative;
+    }
+
+    private function isValid(string $name): bool
+    {
+        if (empty($name)) { return false; }
+        $segments = explode(DIRECTORY_SEPARATOR, $name);
+        foreach ($segments as $segment) {
+            $isDotOnly = trim($segment, '.') === '';
+            $isTrimmed = trim($segment) === $segment;
+            if ($isDotOnly || !$isTrimmed) { return false; }
+        }
+        return true;
+    }
 }

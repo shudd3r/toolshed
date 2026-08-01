@@ -37,13 +37,6 @@ abstract class Node
 
     abstract public function remove(): void;
 
-    protected function pathname(string $name = ''): string
-    {
-        if (empty($name)) { return $this->pathname; }
-        $relative = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $name);
-        return $this->pathname . DIRECTORY_SEPARATOR . $relative;
-    }
-
     protected function removeLeafNode(string $pathname): void
     {
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
