@@ -12,36 +12,31 @@
 namespace Shudd3r\Toolshed\Sync\RefData;
 
 use Shudd3r\Toolshed\Sync\RefData;
+use Shudd3r\Toolshed\Filesystem\Directory;
 
 
 class FileRefData implements RefData
 {
-    private string $toolsDirectory;
-    private ?array $toolClientRefs = null;
+    private Directory $toolsDirectory;
+    private ?array    $toolClientRefs = null;
 
-    public function __construct(string $toolsDirectory)
+    public function __construct(Directory $toolsDirectory)
     {
         $this->toolsDirectory = $toolsDirectory;
     }
 
     public function toolRefs(): array
     {
-        $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
-        $this->toolClientRefs = is_file($installDataFile)
-            ? json_decode(file_get_contents($installDataFile), true) ?? []
-            : [];
+        $installData = $this->toolsDirectory->file('install-locations.json')->contents();
+        $this->toolClientRefs = $installData ? json_decode($installData, true) ?? [] : [];
         return $this->existingInstallations($this->toolClientRefs);
     }
 
     public function save(array $toolRefs): void
     {
         if ($toolRefs === $this->toolClientRefs) { return; }
-        if (!is_dir($this->toolsDirectory)) {
-            mkdir($this->toolsDirectory, 0700);
-        }
-
-        $installDataFile = $this->toolsDirectory . DIRECTORY_SEPARATOR . 'install-locations.json';
-        file_put_contents($installDataFile, json_encode($toolRefs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        $contents = json_encode($toolRefs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        $this->toolsDirectory->file('install-locations.json')->write($contents);
     }
 
     private function existingInstallations(array $installations): array

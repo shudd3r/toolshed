@@ -13,16 +13,17 @@ namespace Shudd3r\Toolshed\Tests\Sync\RefData;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Sync\RefData\FileRefData;
-use Shudd3r\Toolshed\Tests\Fixtures;
+use Shudd3r\Toolshed\Filesystem\Local\LocalDirectory;
+use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
 class FileRefDataTest extends TestCase
 {
-    private static Fixtures\TempFiles $temp;
+    private static TempFiles $temp;
 
     public static function setUpBeforeClass(): void
     {
-        self::$temp = new Fixtures\TempFiles(basename(static::class));
+        self::$temp = new TempFiles(basename(static::class));
     }
 
     protected function tearDown(): void
@@ -77,6 +78,7 @@ class FileRefDataTest extends TestCase
             $contents = json_encode($fileContents, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
             self::$temp->file('shared-tools/install-locations.json', $contents);
         }
-        return new FileRefData(self::$temp->pathname('shared-tools'));
+        $toolsDir = LocalDirectory::root(self::$temp->pathname(''))->subdirectory('shared-tools');
+        return new FileRefData($toolsDir);
     }
 }
