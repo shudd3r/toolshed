@@ -11,38 +11,9 @@
 
 namespace Shudd3r\Toolshed\Filesystem\Local;
 
-use Shudd3r\Toolshed\Filesystem\Node;
 
-
-abstract class LocalNode implements Node
+trait RemoveLeafNodeMethod
 {
-    protected static string $ds = DIRECTORY_SEPARATOR;
-
-    protected string $pathname;
-    protected int    $rootLength;
-
-    private string $name;
-
-    protected function __construct(string $pathname, int $rootLength)
-    {
-        $this->pathname   = $pathname;
-        $this->rootLength = $rootLength;
-    }
-
-    public function __toString(): string
-    {
-        return $this->pathname;
-    }
-
-    public function name(): string
-    {
-        return $this->name ??= str_replace('\\', '/', substr($this->pathname, $this->rootLength + 1));
-    }
-
-    abstract public function exists(): bool;
-
-    abstract public function remove(): void;
-
     protected function removeLeafNode(string $pathname): void
     {
         $isWinOS = self::$ds === '\\';

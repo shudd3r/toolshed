@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\Filesystem\Local;
+namespace Shudd3r\Toolshed\Tests\Filesystem;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Filesystem\Local\LocalDirectory;

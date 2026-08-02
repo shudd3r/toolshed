@@ -15,8 +15,10 @@ use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Exception;
 
 
-class LocalFile extends LocalNode implements File
+class LocalFile extends File
 {
+    use RemoveLeafNodeMethod;
+
     public function exists(): bool
     {
         return is_file($this->pathname);

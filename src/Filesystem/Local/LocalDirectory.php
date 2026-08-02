@@ -12,6 +12,7 @@
 namespace Shudd3r\Toolshed\Filesystem\Local;
 
 use Shudd3r\Toolshed\Filesystem\Directory;
+use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Exception;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
@@ -21,8 +22,10 @@ use Generator;
 use Iterator;
 
 
-class LocalDirectory extends LocalNode implements Directory
+class LocalDirectory extends Directory
 {
+    use RemoveLeafNodeMethod;
+
     public static function root(string $rootPath): self
     {
         $rootPath = str_replace(['/', '\\'], self::$ds, $rootPath);
@@ -30,11 +33,6 @@ class LocalDirectory extends LocalNode implements Directory
             throw new Exception\FilesystemException(sprintf('Root path does not exist `%s`', $rootPath));
         }
         return new self($rootPath, strlen($rootPath));
-    }
-
-    public function name(): string
-    {
-        return $this->isRoot() ? '.' : parent::name();
     }
 
     public function exists(): bool
@@ -61,6 +59,7 @@ class LocalDirectory extends LocalNode implements Directory
         return new self($this->pathname($name), $this->rootLength);
     }
 
+    /** @return Generator<File> */
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $typeFilter = fn (string $pathname): bool => is_file($pathname);
@@ -73,6 +72,7 @@ class LocalDirectory extends LocalNode implements Directory
         }
     }
 
+    /** @return Generator<Directory> */
     public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $typeFilter  = static fn (string $pathname): bool => is_dir($pathname);
@@ -97,33 +97,6 @@ class LocalDirectory extends LocalNode implements Directory
         }
 
         rmdir($this->pathname);
-    }
-
-    protected function isRoot(): bool
-    {
-        return strlen($this->pathname) === $this->rootLength;
-    }
-
-    protected function pathname(string $name): string
-    {
-        $relative = trim(str_replace(['/', '\\'], self::$ds, $name), self::$ds);
-        if (!$this->isValid($relative)) {
-            throw new Exception\FilesystemException(sprintf('Cannot create node with name `%s`', $name));
-        }
-
-        return $this->pathname . self::$ds . $relative;
-    }
-
-    private function isValid(string $name): bool
-    {
-        if (empty($name)) { return false; }
-        $segments = explode(self::$ds, $name);
-        foreach ($segments as $segment) {
-            $isDotOnly = trim($segment, '.') === '';
-            $isTrimmed = trim($segment) === $segment;
-            if ($isDotOnly || !$isTrimmed) { return false; }
-        }
-        return true;
     }
 
     private function nodes(bool $isRecursive): Iterator

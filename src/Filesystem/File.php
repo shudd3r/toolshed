@@ -12,10 +12,10 @@
 namespace Shudd3r\Toolshed\Filesystem;
 
 
-interface File extends Node
+abstract class File extends Node
 {
-    public function contents(): string;
+    abstract public function contents(): string;
 
     /** @throws Exception\FilesystemException */
-    public function write(string $contents): void;
+    abstract public function write(string $contents): void;
 }
