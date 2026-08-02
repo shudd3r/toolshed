@@ -20,5 +20,6 @@ interface Node
 
     public function exists(): bool;
 
+    /** @throws Exception\FilesystemException */
     public function remove(): void;
 }

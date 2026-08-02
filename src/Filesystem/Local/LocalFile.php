@@ -27,7 +27,6 @@ class LocalFile extends LocalNode implements File
         return $this->exists() ? file_get_contents($this->pathname) : '';
     }
 
-    /** @throws Exception\FilesystemException */
     public function write(string $contents): void
     {
         if (is_dir($this->pathname) || ($this->exists() && !is_writable($this->pathname))) {

@@ -42,7 +42,6 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname);
     }
 
-    /** @throws Exception\FilesystemException */
     public function create(): void
     {
         if (is_file($this->pathname)) {
@@ -62,7 +61,6 @@ class LocalDirectory extends LocalNode implements Directory
         return new self($this->pathname($name), $this->rootLength);
     }
 
-    /** @param callable|null $filter fn(string) => bool */
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $filter ??= static fn (string $pathname): bool => true;
@@ -74,7 +72,6 @@ class LocalDirectory extends LocalNode implements Directory
         }
     }
 
-    /** @param callable|null $filter fn(string) => bool */
     public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $filter ??= static fn (string $pathname): bool => true;
