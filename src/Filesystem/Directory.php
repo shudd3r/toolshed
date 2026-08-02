@@ -24,14 +24,14 @@ interface Directory extends Node
     public function subdirectory(string $name): Directory;
 
     /**
-     * @param callable(string): bool|null $filter fn(string) => bool
+     * @param callable(File): bool|null $filter fn(string) => bool
      *
      * @return Generator<File>
      */
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator;
 
     /**
-     * @param callable(string): bool|null $filter fn(string) => bool
+     * @param callable(Directory): bool|null $filter fn(string) => bool
      *
      * @return Generator<Directory>
      */

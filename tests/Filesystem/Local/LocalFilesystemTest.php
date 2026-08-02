@@ -181,7 +181,7 @@ class LocalFilesystemTest extends TestCase
             $root->file('root-file')
         ]);
 
-        $txtOnly = fn (string $pathname): bool => str_ends_with($pathname, '.txt');
+        $txtOnly = fn (LocalFile $file): bool => str_ends_with((string) $file, '.txt');
         $this->assertNodes(fn () => $root->files(true, $txtOnly), [
             $root->file('bar/baz2.txt'),
             $root->file('foo/bar/baz1.txt')
@@ -199,7 +199,7 @@ class LocalFilesystemTest extends TestCase
             $root->subdirectory('foo')
         ]);
 
-        $barBasename = fn (string $pathname): bool => basename($pathname) === 'bar';
+        $barBasename = fn (LocalDirectory $directory): bool => basename((string) $directory) === 'bar';
         $this->assertNodes(fn () => $root->subdirectories(true, $barBasename), [
             $root->subdirectory('bar'),
             $root->subdirectory('foo/bar')

@@ -63,23 +63,25 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator
     {
-        $filter ??= static fn (string $pathname): bool => true;
-        $mainFilter = fn (string $pathname): bool => is_file($pathname) && $filter($pathname);
-        $filenames  = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
+        $typeFilter = fn (string $pathname): bool => is_file($pathname);
+        $filenames  = new CallbackFilterIterator($this->nodes($isRecursive), $typeFilter);
 
         foreach ($filenames as $pathname) {
-            yield new LocalFile($pathname, $this->rootLength);
+            $file = new LocalFile($pathname, $this->rootLength);
+            if ($filter && !$filter($file)) { continue; }
+            yield $file;
         }
     }
 
     public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
     {
-        $filter ??= static fn (string $pathname): bool => true;
-        $mainFilter  = static fn (string $pathname): bool => is_dir($pathname) && $filter($pathname);
-        $directories = new CallbackFilterIterator($this->nodes($isRecursive), $mainFilter);
+        $typeFilter  = static fn (string $pathname): bool => is_dir($pathname);
+        $directories = new CallbackFilterIterator($this->nodes($isRecursive), $typeFilter);
 
         foreach ($directories as $pathname) {
-            yield new LocalDirectory($pathname, $this->rootLength);
+            $directory = new LocalDirectory($pathname, $this->rootLength);
+            if ($filter && !$filter($directory)) { continue; }
+            yield $directory;
         }
     }
 
