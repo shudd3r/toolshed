@@ -12,15 +12,16 @@
 namespace Shudd3r\Toolshed\Tools\Tool;
 
 use Composer\Util\ProcessExecutor;
+use Shudd3r\Toolshed\Filesystem\Directory;
 
 
 class Composer
 {
     private ProcessExecutor $processor;
-    private string          $toolsDir;
+    private Directory       $toolsDir;
     private string          $output = '';
 
-    public function __construct(ProcessExecutor $processor, string $toolsDir)
+    public function __construct(ProcessExecutor $processor, Directory $toolsDir)
     {
         $this->processor = $processor;
         $this->toolsDir  = $toolsDir;
@@ -34,7 +35,7 @@ class Composer
         $command = 'composer update ' . $options . '--no-progress 2>&1';
         $workDir = $this->validWorkDir($tool);
 
-        return $workDir ? $this->processor->execute($command, $this->output, $workDir) : 1;
+        return $workDir ? $this->processor->execute($command, $this->output, (string) $workDir) : 1;
     }
 
     public function output(): string
@@ -42,20 +43,15 @@ class Composer
         return $this->output;
     }
 
-    private function validWorkDir(Identifier $tool): ?string
+    private function validWorkDir(Identifier $tool): ?Directory
     {
-        $workDir = $this->toolsDir . DIRECTORY_SEPARATOR . $tool;
+        $workDir = $this->toolsDir->subdirectory((string) $tool);
+        if ($workDir->file('composer.json')->exists()) { return $workDir; }
 
-        if (!is_dir($workDir)) {
-            $this->output = sprintf('Tool directory `%s` does not exist', $tool);
-            return null;
-        }
+        $this->output = $workDir->exists()
+            ? sprintf('No composer.json in `%s` tool directory', $tool)
+            : sprintf('Tool directory `%s` does not exist', $tool);
 
-        if (!is_file($workDir . DIRECTORY_SEPARATOR . 'composer.json')) {
-            $this->output = sprintf('No composer.json in `%s` tool directory', $tool);
-            return null;
-        }
-
-        return $workDir;
+        return null;
     }
 }

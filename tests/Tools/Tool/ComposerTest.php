@@ -14,6 +14,7 @@ namespace Shudd3r\Toolshed\Tests\Tools\Tool;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Tools\Tool\Composer;
 use Shudd3r\Toolshed\Tools\Tool\Identifier;
+use Shudd3r\Toolshed\Filesystem\Local\LocalDirectory;
 use Shudd3r\Toolshed\Tests\Doubles\FakeProcessExecutor;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
@@ -78,6 +79,6 @@ class ComposerTest extends TestCase
 
     private function composer(?FakeProcessExecutor &$processor = null): Composer
     {
-        return new Composer($processor ??= new FakeProcessExecutor(), self::$temp->pathname(''));
+        return new Composer($processor ??= new FakeProcessExecutor(), LocalDirectory::root(self::$temp->pathname('')));
     }
 }
