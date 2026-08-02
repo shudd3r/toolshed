@@ -20,12 +20,14 @@ use RuntimeException;
 
 class TempFiles
 {
+    public const DS = DIRECTORY_SEPARATOR;
+
     private string $root;
 
     public function __construct(string $testName)
     {
         $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . $testName;
-        $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->relative($tmpName);
+        $this->root = dirname(__DIR__, 2) . self::DS . $this->relative($tmpName);
         is_dir($this->root) || mkdir($this->root, 0700, true);
     }
 
@@ -84,7 +86,7 @@ class TempFiles
 
     public function remove(string $pathname): void
     {
-        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isWinOS = self::DS === '\\';
         $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
         if ($isFile || is_dir($pathname)) {
             $isFile ? unlink($pathname) : rmdir($pathname);
@@ -96,12 +98,12 @@ class TempFiles
 
     public function pathname(string $nodeName): string
     {
-        return $nodeName ? $this->root . DIRECTORY_SEPARATOR . $this->relative($nodeName) : $this->root;
+        return $nodeName ? $this->root . self::DS . $this->relative($nodeName) : $this->root;
     }
 
     public function relative(string $path): string
     {
-        return trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        return trim(str_replace(['/', '\\'], self::DS, $path), self::DS);
     }
 
     public function __destruct()

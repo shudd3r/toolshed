@@ -16,8 +16,12 @@ use Shudd3r\Toolshed\Filesystem\Node;
 
 abstract class LocalNode implements Node
 {
+    protected static string $ds = DIRECTORY_SEPARATOR;
+
     protected string $pathname;
     protected int    $rootLength;
+
+    private string $name;
 
     protected function __construct(string $pathname, int $rootLength)
     {
@@ -32,7 +36,7 @@ abstract class LocalNode implements Node
 
     public function name(): string
     {
-        return str_replace('\\', '/', substr($this->pathname, $this->rootLength + 1));
+        return $this->name ??= str_replace('\\', '/', substr($this->pathname, $this->rootLength + 1));
     }
 
     abstract public function exists(): bool;
@@ -41,7 +45,7 @@ abstract class LocalNode implements Node
 
     protected function removeLeafNode(string $pathname): void
     {
-        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isWinOS = self::$ds === '\\';
         $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
 
         $isStaleWindowsLink = !$isFile && !is_dir($pathname);

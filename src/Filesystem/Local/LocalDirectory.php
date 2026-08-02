@@ -25,7 +25,7 @@ class LocalDirectory extends LocalNode implements Directory
 {
     public static function root(string $rootPath): self
     {
-        $rootPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $rootPath);
+        $rootPath = str_replace(['/', '\\'], self::$ds, $rootPath);
         if (!is_dir($rootPath)) {
             throw new Exception\FilesystemException(sprintf('Root path does not exist `%s`', $rootPath));
         }
@@ -99,25 +99,25 @@ class LocalDirectory extends LocalNode implements Directory
         rmdir($this->pathname);
     }
 
-    private function isRoot(): bool
+    protected function isRoot(): bool
     {
         return strlen($this->pathname) === $this->rootLength;
     }
 
-    private function pathname(string $name): string
+    protected function pathname(string $name): string
     {
-        $relative = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
+        $relative = trim(str_replace(['/', '\\'], self::$ds, $name), self::$ds);
         if (!$this->isValid($relative)) {
             throw new Exception\FilesystemException(sprintf('Cannot create node with name `%s`', $name));
         }
 
-        return $this->pathname . DIRECTORY_SEPARATOR . $relative;
+        return $this->pathname . self::$ds . $relative;
     }
 
     private function isValid(string $name): bool
     {
         if (empty($name)) { return false; }
-        $segments = explode(DIRECTORY_SEPARATOR, $name);
+        $segments = explode(self::$ds, $name);
         foreach ($segments as $segment) {
             $isDotOnly = trim($segment, '.') === '';
             $isTrimmed = trim($segment) === $segment;
