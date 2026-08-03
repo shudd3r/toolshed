@@ -12,32 +12,26 @@
 namespace Shudd3r\Toolshed\Tests\Filesystem;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
-use Shudd3r\Toolshed\Filesystem\Virtual\VirtualFile;
-use Shudd3r\Toolshed\Filesystem\Exception;
+use Shudd3r\Toolshed\Filesystem\Directory;
+use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Node;
+use Shudd3r\Toolshed\Filesystem\Exception;
 use Generator;
 
 
-class VirtualFilesystemTest extends TestCase
+abstract class FilesystemTests extends TestCase
 {
     public function testNodeInstantiations()
     {
         $root = $this->root();
-        $this->assertInstanceOf(VirtualDirectory::class, $subdirectory = $root->subdirectory('foo/bar'));
+        $this->assertInstanceOf(Directory::class, $subdirectory = $root->subdirectory('foo/bar'));
         $this->assertEquals($subdirectory, $root->subdirectory('foo')->subdirectory('bar'));
 
-        $this->assertInstanceOf(VirtualFile::class, $file = $root->file('foo/bar/baz.txt'));
+        $this->assertInstanceOf(File::class, $file = $root->file('foo/bar/baz.txt'));
         $this->assertEquals($file, $subdirectory->file('baz.txt'));
     }
 
-    public function testStringCasting_ReturnsAbsolutePath()
-    {
-        $root = $this->root();
-        $this->assertSame('vfs://root', (string) $root);
-        $this->assertSame('vfs://root/foo/bar', (string) $root->subdirectory('foo/bar'));
-        $this->assertSame('vfs://root/foo/bar/baz.txt', (string) $root->file('foo/bar/baz.txt'));
-    }
+    abstract public function testStringCasting_ReturnsAbsolutePath();
 
     public function testName_ReturnsPathnameRelativeToRootDirectory()
     {
@@ -103,7 +97,7 @@ class VirtualFilesystemTest extends TestCase
         $this->assertSame('--- new contents ---', $root->subdirectory('foo/bar')->file('baz.txt')->contents());
     }
 
-    public function testCreatingInvalidDirectoryNode_ThrowsException()
+    public function testCreatingDirectory_OnFilePath_ThrowsException()
     {
         $root = $this->root();
         $root->file('foo/bar')->write('contents');
@@ -112,7 +106,7 @@ class VirtualFilesystemTest extends TestCase
         $subdirectory->create();
     }
 
-    public function testCreatingInvalidFileNode_ThrowsException()
+    public function testCreatingFile_OnDirectoryPath_ThrowsException()
     {
         $root = $this->root();
         $root->subdirectory('foo/bar')->create();
@@ -121,7 +115,7 @@ class VirtualFilesystemTest extends TestCase
         $file->write('contents');
     }
 
-    public function testCreatingNodeOnFilePath_ThrowsException()
+    public function testCreatingNode_OnExpandedFilePath_ThrowsException()
     {
         $root = $this->root();
         $root->file('foo/bar.txt')->write('contents');
@@ -164,7 +158,7 @@ class VirtualFilesystemTest extends TestCase
         $root->subdirectory('foo/bar/baz')->create();
         $root->file('root-file')->write('contents');
 
-        $specificContents = fn (VirtualFile $file) => $file->contents() !== 'contents';
+        $specificContents = fn (File $file) => $file->contents() !== 'contents';
         $this->assertNodes($root->files(false, $specificContents), []);
 
         $this->assertNodes($root->files(), [
@@ -177,7 +171,7 @@ class VirtualFilesystemTest extends TestCase
             $root->file('root-file')
         ]);
 
-        $txtOnly = fn (VirtualFile $file): bool => str_ends_with((string) $file, '.txt');
+        $txtOnly = fn (File $file): bool => str_ends_with((string) $file, '.txt');
         $this->assertNodes($root->files(true, $txtOnly), [
             $root->file('bar/baz2.txt'),
             $root->file('foo/bar/baz1.txt')
@@ -195,7 +189,7 @@ class VirtualFilesystemTest extends TestCase
             $root->subdirectory('foo')
         ]);
 
-        $barBasename = fn (VirtualDirectory $directory): bool => basename((string) $directory) === 'bar';
+        $barBasename = fn (Directory $directory): bool => basename((string) $directory) === 'bar';
         $this->assertNodes($root->subdirectories(true, $barBasename), [
             $root->subdirectory('bar'),
             $root->subdirectory('foo/bar')
@@ -216,7 +210,7 @@ class VirtualFilesystemTest extends TestCase
     }
 
     /** @param array<Node> $nodeList */
-    private function assertNodes(Generator $nodesGenerator, array $nodeList)
+    protected function assertNodes(Generator $nodesGenerator, array $nodeList)
     {
         $indexedNodes = [];
         foreach ($nodeList as $node) {
@@ -224,15 +218,12 @@ class VirtualFilesystemTest extends TestCase
         }
 
         foreach ($nodesGenerator as $name => $node) {
-            $this->assertSame($node, $indexedNodes[$name]);
+            $this->assertEquals($node, $indexedNodes[$name]);
             unset($indexedNodes[$name]);
         }
         $nodeNames = $indexedNodes ? '[`' . implode('`, `', array_keys($indexedNodes)) . '`]' : '[]';
         $this->assertEmpty($indexedNodes, sprintf('Some of expected nodes were not iterated: %s', $nodeNames));
     }
 
-    private function root(): VirtualDirectory
-    {
-        return VirtualDirectory::root('vfs://root', '/');
-    }
+    abstract protected function root(): Directory;
 }
