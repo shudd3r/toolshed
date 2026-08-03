@@ -15,8 +15,10 @@ use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Exception;
 
 
-class LocalFile extends LocalNode implements File
+class LocalFile extends File
 {
+    use RemoveLeafNodeMethod;
+
     public function exists(): bool
     {
         return is_file($this->pathname);
@@ -27,13 +29,15 @@ class LocalFile extends LocalNode implements File
         return $this->exists() ? file_get_contents($this->pathname) : '';
     }
 
-    /** @throws Exception\FilesystemException */
     public function write(string $contents): void
     {
         if (is_dir($this->pathname) || ($this->exists() && !is_writable($this->pathname))) {
             $message = 'Cannot write to file `%s`';
             throw new Exception\FilesystemException(sprintf($message, $this->pathname));
         }
+
+        $parent = new LocalDirectory(dirname($this->pathname), $this->rootLength);
+        if (!$parent->exists()) { $parent->create(); }
 
         is_dir(dirname($this->pathname)) || mkdir(dirname($this->pathname), 0700, true);
         file_put_contents($this->pathname, $contents);
