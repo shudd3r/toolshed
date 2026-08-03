@@ -24,8 +24,20 @@ abstract class Directory extends Node
     /** @throws Exception\FilesystemException */
     abstract public function create(): void;
 
+    /**
+     * @param string $name Would not accept dot-path or whitespace padded path segments.
+     *                     Separators will be trimmed and Windows one `\` will be normalized to `/`.
+     *
+     * @return File Instance will be returned even if path is invalid
+     */
     abstract public function file(string $name): File;
 
+    /**
+     * @param string $name Would not accept dot-path or whitespace padded path segments.
+     *                     Separators will be trimmed and Windows one `\` will be normalized to `/`.
+     *
+     * @return Directory Instance will be returned even if path is invalid
+     */
     abstract public function subdirectory(string $name): Directory;
 
     /**
