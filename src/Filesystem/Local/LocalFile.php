@@ -36,6 +36,9 @@ class LocalFile extends File
             throw new Exception\FilesystemException(sprintf($message, $this->pathname));
         }
 
+        $parent = new LocalDirectory(dirname($this->pathname), $this->rootLength);
+        if (!$parent->exists()) { $parent->create(); }
+
         is_dir(dirname($this->pathname)) || mkdir(dirname($this->pathname), 0700, true);
         file_put_contents($this->pathname, $contents);
     }

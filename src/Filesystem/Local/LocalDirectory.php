@@ -42,10 +42,11 @@ class LocalDirectory extends Directory
 
     public function create(): void
     {
-        if (is_file($this->pathname)) {
-            $message = 'Cannot create directory `%s`';
-            throw new Exception\FilesystemException(sprintf($message, $this->pathname));
+        $name = $this->pathname;
+        while ($this->pathToVerify($name)) {
+            $name = dirname($name);
         }
+
         $this->exists() || mkdir($this->pathname, 0700, true);
     }
 
@@ -68,7 +69,7 @@ class LocalDirectory extends Directory
         foreach ($filenames as $pathname) {
             $file = new LocalFile($pathname, $this->rootLength);
             if ($filter && !$filter($file)) { continue; }
-            yield $file;
+            yield $file->name() => $file;
         }
     }
 
@@ -81,7 +82,7 @@ class LocalDirectory extends Directory
         foreach ($directories as $pathname) {
             $directory = new LocalDirectory($pathname, $this->rootLength);
             if ($filter && !$filter($directory)) { continue; }
-            yield $directory;
+            yield $directory->name() => $directory;
         }
     }
 
@@ -107,5 +108,13 @@ class LocalDirectory extends Directory
             return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
         }
         return new FilesystemIterator($this->pathname, $flags);
+    }
+
+    private function pathToVerify(string $pathname): bool
+    {
+        if (is_dir($pathname)) { return false; }
+        if (!is_file($pathname)) { return true; }
+        $message = 'Cannot create directory `%s`';
+        throw new Exception\FilesystemException(sprintf($message, $this->pathname));
     }
 }
