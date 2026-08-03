@@ -14,29 +14,16 @@ namespace Shudd3r\Toolshed\Tests\Tools\Tool;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Tools\Tool\Composer;
 use Shudd3r\Toolshed\Tools\Tool\Identifier;
-use Shudd3r\Toolshed\Filesystem\Local\LocalDirectory;
+use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Toolshed\Tests\Doubles\FakeProcessExecutor;
-use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
 class ComposerTest extends TestCase
 {
-    private static TempFiles $temp;
-
-    public static function setUpBeforeClass(): void
-    {
-        self::$temp = new TempFiles(basename(static::class));
-    }
-
-    protected function tearDown(): void
-    {
-        self::$temp->clear();
-    }
-
     public function testInstall_ForInvalidToolDirectory_ReturnsErrorCode()
     {
-        self::$temp->directory('some.package.9.7.11');
-        $composer = $this->composer();
+        $composer = $this->composer($processor, $toolsDir);
+        $toolsDir->subdirectory('some.package.9.7.11')->create();
 
         $tool = Identifier::fromStrings('some/package', '^9.6');
         $this->assertEquals(1, $composer->install($tool));
@@ -51,9 +38,8 @@ class ComposerTest extends TestCase
 
     public function testInstall_ForUnresolvedToolVersion()
     {
-        self::$temp->file('test.package.unresolved/composer.json', '{}');
-        $processor = new FakeProcessExecutor();
-        $composer  = $this->composer($processor);
+        $composer = $this->composer($processor, $toolsDir);
+        $toolsDir->file('test.package.unresolved/composer.json')->write('{}');
 
         $tool = Identifier::fromStrings('test/package', '^9.6');
         $this->assertEquals(0, $composer->install($tool));
@@ -65,9 +51,8 @@ class ComposerTest extends TestCase
 
     public function testInstall_ForResolvedToolVersion()
     {
-        self::$temp->file('test.package.9.7.11/composer.json', '{}');
-        $processor = new FakeProcessExecutor();
-        $composer  = $this->composer($processor);
+        $composer = $this->composer($processor, $toolsDir);
+        $toolsDir->file('test.package.9.7.11/composer.json')->write('{}');
 
         $tool = Identifier::fromStrings('test/package', '9.7.11');
         $this->assertEquals(0, $composer->install($tool));
@@ -77,8 +62,10 @@ class ComposerTest extends TestCase
         $this->assertSame($expectedCommand, $processor->command);
     }
 
-    private function composer(?FakeProcessExecutor &$processor = null): Composer
+    private function composer(?FakeProcessExecutor &$processor = null, ?VirtualDirectory &$directory = null): Composer
     {
-        return new Composer($processor ??= new FakeProcessExecutor(), LocalDirectory::root(self::$temp->pathname('')));
+        $processor ??= new FakeProcessExecutor();
+        $directory ??= VirtualDirectory::root('vfs://root', '/');
+        return new Composer($processor, $directory);
     }
 }
