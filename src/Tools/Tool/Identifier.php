@@ -42,7 +42,12 @@ class Identifier
         $this->php     = $phpVersion;
     }
 
-    public function __toString(): string
+    public function packageName(): string
+    {
+        return $this->name;
+    }
+
+    public function installName(): string
     {
         $version = $this->isResolved() ? $this->version->getPrettyString() : 'unresolved';
         return str_replace('/', '.', $this->name) . '.' . $version;

@@ -45,12 +45,12 @@ class Composer
 
     private function validWorkDir(Identifier $tool): ?Directory
     {
-        $workDir = $this->toolsDir->subdirectory((string) $tool);
+        $workDir = $this->toolsDir->subdirectory($tool->installName());
         if ($workDir->file('composer.json')->exists()) { return $workDir; }
 
         $this->output = $workDir->exists()
-            ? sprintf('No composer.json in `%s` tool directory', $tool)
-            : sprintf('Tool directory `%s` does not exist', $tool);
+            ? sprintf('No composer.json in `%s` tool directory', $tool->installName())
+            : sprintf('Tool directory `%s` does not exist', $tool->installName());
 
         return null;
     }

@@ -29,7 +29,8 @@ class IdentifierTest extends TestCase
         $this->assertTrue($id->isResolved());
         $require = ['require' => ['vendor/package' => $version]];
         $this->assertSame($require, $id->composerRequire());
-        $this->assertSame('vendor.package.' . $version, (string) $id);
+        $this->assertSame('vendor.package.' . $version, $id->installName());
+        $this->assertSame('vendor/package', $id->packageName());
     }
 
     /** @dataProvider exactConstraints */
@@ -47,8 +48,9 @@ class IdentifierTest extends TestCase
         $this->assertFalse($id->isResolved());
         $require = ['require' => ['php' => '^7.4 || ^8.0', 'vendor/package' => $version]];
         $this->assertSame($require, $id->composerRequire());
-        $this->assertSame('vendor.package.unresolved', (string) $id);
+        $this->assertSame('vendor.package.unresolved', $id->installName());
         $this->assertEquals($this->id('1.2.3'), $id->resolvedTo(Identifier::parseConstraint('1.2.3')));
+        $this->assertSame('vendor/package', $id->packageName());
     }
 
     /** @dataProvider rangeConstraints */
