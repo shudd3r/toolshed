@@ -14,9 +14,24 @@ namespace Shudd3r\Toolshed\Tools;
 use Shudd3r\Toolshed\Filesystem\Directory;
 
 
-interface Tool
+class Tool
 {
-    public function identifier(): Identifier;
+    private Identifier $identifier;
+    private Directory  $binaries;
 
-    public function binaries(): Directory;
+    public function __construct(Identifier $identifier, Directory $binaries)
+    {
+        $this->identifier = $identifier;
+        $this->binaries   = $binaries;
+    }
+
+    public function identifier(): Identifier
+    {
+        return $this->identifier;
+    }
+
+    public function binaries(): Directory
+    {
+        return $this->binaries;
+    }
 }

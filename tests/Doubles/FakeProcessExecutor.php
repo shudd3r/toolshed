@@ -24,8 +24,8 @@ class FakeProcessExecutor extends ProcessExecutor
           - Locking another/package-name (7.1.3)
           - Locking bar/baz (dev-main)
           - Locking foo/bar-baz (2.13.4)
-          - Locking something/else (0.14.2-dev)
-          - Locking test/package (9.10.11)
+          - Locking something/else-package (0.14.2-dev)
+          - Locking {packageName} ({lockedVersion})
           - Locking vendor/super-tool (v3.1.8)
         2 package suggestions were added by new dependencies, use `composer suggest` to see details.
         No security vulnerability advisories found.
@@ -37,23 +37,35 @@ class FakeProcessExecutor extends ProcessExecutor
         Your requirements could not be resolved to an installable set of packages.
         
           Problem 1
-            - Root composer.json requires test/package ^9.6, found test/package[9.5.11] but it does not match the constraint.
+            - Root composer.json requires {packageName} ^9.6, found {packageName}[{lockedVersion}] but it does not match the constraint.
         CLI;
 
-    public string $command = '';
+    public array $commands = [];
 
-    private int $errorCode;
+    private int    $errorCode     = 0;
+    private string $packageName   = 'test/package';
+    private string $lockedVersion = '9.10.11';
 
-    public function __construct(int $errorCode = 0)
+    public function presetOutput(int $errorCode, string $packageName, string $lockedVersion): void
     {
-        $this->errorCode = $errorCode;
-        parent::__construct();
+        $this->errorCode     = $errorCode;
+        $this->packageName   = $packageName;
+        $this->lockedVersion = $lockedVersion;
     }
 
     public function execute($command, &$output = null, ?string $cwd = null): int
     {
-        $this->command = $command;
-        $output = $this->errorCode ? self::INVALID_OUTPUT : self::VALID_OUTPUT;
+        $this->commands[$cwd] = $command;
+        $output = $this->output($this->errorCode ? self::INVALID_OUTPUT : self::VALID_OUTPUT);
         return $this->errorCode;
+    }
+
+    private function output(string $template): string
+    {
+        return str_replace(
+            ['{packageName}', '{lockedVersion}'],
+            [$this->packageName, $this->lockedVersion],
+            $template
+        );
     }
 }
