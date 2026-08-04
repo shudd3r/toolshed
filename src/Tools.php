@@ -11,10 +11,13 @@
 
 namespace Shudd3r\Toolshed;
 
+use Shudd3r\Toolshed\Tools\Identifier;
 use Shudd3r\Toolshed\Tools\Tool;
 
 
 interface Tools
 {
-    public function tool(Tool\Identifier $id): Tool;
+    public function install(Identifier $id): Tool;
+
+    public function remove(Identifier $id): void;
 }

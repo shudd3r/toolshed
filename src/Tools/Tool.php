@@ -11,17 +11,12 @@
 
 namespace Shudd3r\Toolshed\Tools;
 
-use Shudd3r\Toolshed\Tools\Tool\Identifier;
+use Shudd3r\Toolshed\Filesystem\Directory;
 
 
 interface Tool
 {
     public function identifier(): Identifier;
 
-    public function synchronize(string $projectBinDirectory): void;
-
-    public function remove(string $projectBinDirectory): void;
-
-    /** @return array<string> */
-    public function binaries(): array;
+    public function binaries(): Directory;
 }

@@ -13,7 +13,7 @@ namespace Shudd3r\Toolshed\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\RequiredTools;
-use Shudd3r\Toolshed\Tools\Tool\Identifier;
+use Shudd3r\Toolshed\Tools\Identifier;
 
 
 class RequiredToolsTest extends TestCase

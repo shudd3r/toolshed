@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\Tools\Tool;
+namespace Shudd3r\Toolshed\Tests\Tools;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Tools\Tool\Composer;
-use Shudd3r\Toolshed\Tools\Tool\Identifier;
+use Shudd3r\Toolshed\Tools\Composer;
+use Shudd3r\Toolshed\Tools\Identifier;
 use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Toolshed\Tests\Doubles\FakeProcessExecutor;
 

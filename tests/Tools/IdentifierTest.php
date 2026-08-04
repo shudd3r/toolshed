@@ -9,19 +9,16 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Toolshed\Tests\Tools\Tool;
+namespace Shudd3r\Toolshed\Tests\Tools;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Tools\Tool\Identifier;
-use Composer\Semver\Constraint\ConstraintInterface;
+use Shudd3r\Toolshed\Tools\Identifier;
 use InvalidArgumentException;
 use LogicException;
 
 
 class IdentifierTest extends TestCase
 {
-    private static ConstraintInterface $php;
-
     /** @dataProvider exactConstraints */
     public function testExactConstraintsIdentifier(string $version)
     {
