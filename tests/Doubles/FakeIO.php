@@ -22,4 +22,9 @@ class FakeIO extends NullIO
     {
         $this->messages[] = $messages;
     }
+
+    public function writeError($messages, bool $newline = true, int $verbosity = self::NORMAL): void
+    {
+        $this->messages[] = $messages;
+    }
 }
