@@ -13,7 +13,7 @@ namespace Shudd3r\Toolshed\Tests\Sync;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Sync\UsageRegistry;
-use Shudd3r\Toolshed\Tests\Doubles\FakeRefData as Data;
+use Shudd3r\Toolshed\Tests\Doubles\FakeRefData;
 
 
 class UsageRegistryTest extends TestCase
@@ -22,7 +22,7 @@ class UsageRegistryTest extends TestCase
     {
         $tracker = $this->tracker([]);
         $tracker->update(['phpunit.phpunit.9.6.3'], 'some/path');
-        $this->assertSame([], Data::$toolRefs);
+        $this->assertSame([], FakeRefData::$toolRefs);
         $this->assertData(['phpunit.phpunit.9.6.3' => ['some/path']], $tracker);
     }
 
@@ -107,7 +107,7 @@ class UsageRegistryTest extends TestCase
             'phpunit.phpunit.9.6.3'  => ['not/existing/path', 'some/path'],
             'polymorphine.dev.0.6.0' => [],
             'zzold.tool.0.2.3'       => []
-        ], ['not/existing/path']);
+        ]);
         $tracker->remove('new.tool.1.2.3');
         $tracker->remove('no.entry.2.54.3-dev');
         $tracker->remove('polymorphine.dev.0.6.0');
@@ -121,11 +121,11 @@ class UsageRegistryTest extends TestCase
     private function assertData(array $expected, UsageRegistry &$toolClients): void
     {
         $toolClients = null;
-        $this->assertSame($expected, Data::$toolRefs);
+        $this->assertSame($expected, FakeRefData::$toolRefs);
     }
 
     private function tracker(?array $installations = null): UsageRegistry
     {
-        return new UsageRegistry(new Data($installations));
+        return new UsageRegistry(new FakeRefData($installations));
     }
 }

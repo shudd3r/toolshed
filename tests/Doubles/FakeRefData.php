@@ -12,15 +12,17 @@
 namespace Shudd3r\Toolshed\Tests\Doubles;
 
 use Shudd3r\Toolshed\Sync\RefData;
+use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 
 
-class FakeRefData implements RefData
+class FakeRefData extends RefData
 {
     public static array $toolRefs = [];
 
     public function __construct(?array $toolRefs = null)
     {
         self::$toolRefs = $toolRefs ?? self::$toolRefs;
+        parent::__construct(VirtualDirectory::root('/'));
     }
 
     public function toolRefs(): array
@@ -31,5 +33,10 @@ class FakeRefData implements RefData
     public function save(array $toolRefs): void
     {
         self::$toolRefs = $toolRefs;
+    }
+
+    protected function directoryExists(string $directoryPath): bool
+    {
+        return true;
     }
 }

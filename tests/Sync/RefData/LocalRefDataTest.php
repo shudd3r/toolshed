@@ -12,12 +12,12 @@
 namespace Shudd3r\Toolshed\Tests\Sync\RefData;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Sync\RefData\FileRefData;
+use Shudd3r\Toolshed\Sync\RefData\LocalRefData;
 use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
 
-class FileRefDataTest extends TestCase
+class LocalRefDataTest extends TestCase
 {
     private static TempFiles $temp;
 
@@ -77,10 +77,10 @@ class FileRefDataTest extends TestCase
         $this->assertSame($expected, $data->toolRefs());
     }
 
-    private function data(?VirtualDirectory &$toolsDir = null): FileRefData
+    private function data(?VirtualDirectory &$toolsDir = null): LocalRefData
     {
         $toolsDir ??= VirtualDirectory::root('vfs://root')->subdirectory('shared-tools');
-        return new FileRefData($toolsDir);
+        return new LocalRefData($toolsDir);
     }
 
     private function writeData(VirtualDirectory $toolsDir, array $data): void

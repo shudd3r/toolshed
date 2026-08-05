@@ -59,7 +59,6 @@ class UsageRegistry
 
     public function __destruct()
     {
-        if (!isset($this->toolRefs)) { return; }
-        $this->refData->save($this->toolRefs);
+        isset($this->toolRefs) && $this->refData->save($this->toolRefs);
     }
 }
