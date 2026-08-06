@@ -19,6 +19,19 @@ use LogicException;
 
 class IdentifierTest extends TestCase
 {
+    public function testStaticConstructors()
+    {
+        $id = new Identifier('package/name', Identifier::parseConstraint('1.2.3'), Identifier::parseConstraint('*'));
+        $this->assertEquals(Identifier::fromStrings('package/name', '1.2.3'), $id);
+        $this->assertEquals(Identifier::fromInstallName('package.name.1.2.3'), $id);
+    }
+
+    public function testInstantiationWithNameWithoutVersion_ThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Identifier::fromInstallName('foo.bar');
+    }
+
     /** @dataProvider exactConstraints */
     public function testExactConstraintsIdentifier(string $version)
     {
