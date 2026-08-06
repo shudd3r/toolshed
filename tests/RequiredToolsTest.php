@@ -29,5 +29,8 @@ class RequiredToolsTest extends TestCase
         $tools = new RequiredTools($packageBinDirectory, $toolIdentifiers);
         $this->assertSame($packageBinDirectory, $tools->packageBinDirectory());
         $this->assertSame($toolIdentifiers, $tools->toolIdentifiers());
+
+        $tools->update($resolved = Identifier::fromStrings('phpunit/phpunit', '9.8.11'));
+        $this->assertSame([$resolved] + $toolIdentifiers, $tools->toolIdentifiers());
     }
 }

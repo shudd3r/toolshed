@@ -20,10 +20,10 @@ class RequiredTools
     private array  $toolIdentifiers;
 
     /** @param array<Identifier> $toolIdentifiers */
-    public function __construct(string $packageBinDirectory, array $toolIdentifiers)
+    public function __construct(string $packageBinDirectory, array $toolIdentifiers = [])
     {
         $this->packageBinDirectory = $packageBinDirectory;
-        $this->toolIdentifiers     = $toolIdentifiers;
+        $this->toolIdentifiers     = $this->indexedIdentifiers(...$toolIdentifiers);
     }
 
     public function packageBinDirectory(): string
@@ -34,6 +34,21 @@ class RequiredTools
     /** @return array<Identifier> */
     public function toolIdentifiers(): array
     {
-        return $this->toolIdentifiers;
+        return array_values($this->toolIdentifiers);
+    }
+
+    public function update(Identifier $tool): void
+    {
+        $this->toolIdentifiers[$tool->packageName()] = $tool;
+    }
+
+    private function indexedIdentifiers(Identifier ...$identifiers): array
+    {
+        $toolIdentifiers = [];
+        foreach ($identifiers as $identifier) {
+            $toolIdentifiers[$identifier->packageName()] = $identifier;
+        }
+
+        return $toolIdentifiers;
     }
 }
