@@ -12,26 +12,26 @@
 namespace Shudd3r\Toolshed\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\RequiredTools;
+use Shudd3r\Toolshed\RequestedTools;
 use Shudd3r\Toolshed\Filesystem\Virtual;
 use Shudd3r\Toolshed\Tools\Identifier;
 
 
-class RequiredToolsTest extends TestCase
+class RequestedToolsTest extends TestCase
 {
     public function testInstanceDataMethods()
     {
-        $packageBinDirectory = Virtual\VirtualDirectory::root('/usr/home/project/vendor/bin');
+        $clientBinDirectory = Virtual\VirtualDirectory::root('/usr/home/project/vendor/bin');
         $toolIdentifiers = [
             Identifier::fromStrings('phpunit/phpunit', '^9.5', '^7.4 || ^8.0'),
             Identifier::fromStrings('polymorphine/dev', '0.6.0')
         ];
 
-        $tools = new RequiredTools($packageBinDirectory, $toolIdentifiers);
-        $this->assertSame($packageBinDirectory, $tools->packageBinDirectory());
-        $this->assertSame($toolIdentifiers, $tools->toolIdentifiers());
+        $request = new RequestedTools($clientBinDirectory, $toolIdentifiers);
+        $this->assertSame($clientBinDirectory, $request->clientBinDirectory());
+        $this->assertSame($toolIdentifiers, $request->toolIdentifiers());
 
-        $tools->update($resolved = Identifier::fromStrings('phpunit/phpunit', '9.8.11'));
-        $this->assertSame([$resolved] + $toolIdentifiers, $tools->toolIdentifiers());
+        $request->update($resolved = Identifier::fromStrings('phpunit/phpunit', '9.8.11'));
+        $this->assertSame([$resolved] + $toolIdentifiers, $request->toolIdentifiers());
     }
 }

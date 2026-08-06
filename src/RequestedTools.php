@@ -15,21 +15,21 @@ use Shudd3r\Toolshed\Filesystem\Directory;
 use Shudd3r\Toolshed\Tools\Identifier;
 
 
-class RequiredTools
+class RequestedTools
 {
-    private Directory $packageBinDirectory;
+    private Directory $clientBinDirectory;
     private array     $toolIdentifiers;
 
     /** @param array<Identifier> $toolIdentifiers */
-    public function __construct(Directory $packageBinDirectory, array $toolIdentifiers = [])
+    public function __construct(Directory $clientBinDirectory, array $toolIdentifiers = [])
     {
-        $this->packageBinDirectory = $packageBinDirectory;
-        $this->toolIdentifiers     = $this->indexedIdentifiers(...$toolIdentifiers);
+        $this->clientBinDirectory = $clientBinDirectory;
+        $this->toolIdentifiers    = $this->indexedIdentifiers(...$toolIdentifiers);
     }
 
-    public function packageBinDirectory(): Directory
+    public function clientBinDirectory(): Directory
     {
-        return $this->packageBinDirectory;
+        return $this->clientBinDirectory;
     }
 
     /** @return array<Identifier> */
