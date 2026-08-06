@@ -13,6 +13,7 @@ namespace Shudd3r\Toolshed\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\RequiredTools;
+use Shudd3r\Toolshed\Filesystem\Virtual;
 use Shudd3r\Toolshed\Tools\Identifier;
 
 
@@ -20,7 +21,7 @@ class RequiredToolsTest extends TestCase
 {
     public function testInstanceDataMethods()
     {
-        $packageBinDirectory = __DIR__;
+        $packageBinDirectory = Virtual\VirtualDirectory::root('/usr/home/project/vendor/bin');
         $toolIdentifiers = [
             Identifier::fromStrings('phpunit/phpunit', '^9.5', '^7.4 || ^8.0'),
             Identifier::fromStrings('polymorphine/dev', '0.6.0')

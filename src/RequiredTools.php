@@ -11,22 +11,23 @@
 
 namespace Shudd3r\Toolshed;
 
+use Shudd3r\Toolshed\Filesystem\Directory;
 use Shudd3r\Toolshed\Tools\Identifier;
 
 
 class RequiredTools
 {
-    private string $packageBinDirectory;
-    private array  $toolIdentifiers;
+    private Directory $packageBinDirectory;
+    private array     $toolIdentifiers;
 
     /** @param array<Identifier> $toolIdentifiers */
-    public function __construct(string $packageBinDirectory, array $toolIdentifiers = [])
+    public function __construct(Directory $packageBinDirectory, array $toolIdentifiers = [])
     {
         $this->packageBinDirectory = $packageBinDirectory;
         $this->toolIdentifiers     = $this->indexedIdentifiers(...$toolIdentifiers);
     }
 
-    public function packageBinDirectory(): string
+    public function packageBinDirectory(): Directory
     {
         return $this->packageBinDirectory;
     }
