@@ -11,6 +11,9 @@
 
 namespace Shudd3r\Toolshed\Sync;
 
+use Shudd3r\Toolshed\RequestedTools;
+use Shudd3r\Toolshed\Tools\Identifier;
+
 
 class UsageRegistry
 {
@@ -22,10 +25,12 @@ class UsageRegistry
         $this->refData = $refData;
     }
 
-    public function update(array $toolVersions, string $clientBinDir): void
+    public function update(RequestedTools $tools): void
     {
+        $clientBinDir = str_replace('\\', '/', (string) $tools->clientBinDirectory());
+        $toolVersions = array_map(fn (Identifier $id): string => $id->installName(), $tools->toolIdentifiers());
+
         $this->toolRefs ??= $this->refData->toolRefs();
-        $clientBinDir = str_replace('\\', '/', $clientBinDir);
         foreach ($this->toolRefs as $packageVer => &$locations) {
             $toolFound = in_array($packageVer, $toolVersions, true);
             $pathFound = in_array($clientBinDir, $locations, true);
