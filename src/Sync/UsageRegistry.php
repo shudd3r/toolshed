@@ -53,13 +53,14 @@ class UsageRegistry
     public function unusedTools(): array
     {
         $this->toolRefs ??= $this->refData->toolRefs();
-        return array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
+        $installNames = array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
+        return array_map(fn (string $installName) => Identifier::fromInstallName($installName), $installNames);
     }
 
-    public function remove(string $tool): void
+    public function remove(Identifier $tool): void
     {
         $this->toolRefs ??= $this->refData->toolRefs();
-        unset($this->toolRefs[$tool]);
+        unset($this->toolRefs[$tool->installName()]);
     }
 
     public function __destruct()

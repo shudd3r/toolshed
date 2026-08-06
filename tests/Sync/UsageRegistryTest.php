@@ -106,7 +106,7 @@ class UsageRegistryTest extends TestCase
         $this->assertData($expected, $tracker);
     }
 
-    public function testUnusedTools_ReturnsListOfToolsWithoutLocations()
+    public function testUnusedTools_ReturnsListOfToolIdentifiersWithoutLocations()
     {
         $tracker = $this->tracker([
             'new.tool.1.2.3'         => ['/some/path', '/zzz/path'],
@@ -114,7 +114,7 @@ class UsageRegistryTest extends TestCase
             'polymorphine.dev.0.6.0' => ['/some/path'],
             'zzold.tool.0.2.3'       => []
         ]);
-        $this->assertSame(['zzold.tool.0.2.3'], $tracker->unusedTools());
+        $this->assertEquals([Identifier::fromInstallName('zzold.tool.0.2.3')], $tracker->unusedTools());
 
         $requested = $this->requested('/some/path', [
             Identifier::fromStrings('new/tool', '1.2.3'),
@@ -122,13 +122,18 @@ class UsageRegistryTest extends TestCase
         ]);
 
         $tracker->update($requested);
+        $unused = [
+            Identifier::fromInstallName('phpunit.phpunit.9.6.3'),
+            Identifier::fromInstallName('zzold.tool.0.2.3')
+        ];
+        $this->assertEquals($unused, $tracker->unusedTools());
+
         $expected = [
             'new.tool.1.2.3'         => ['/some/path', '/zzz/path'],
             'phpunit.phpunit.9.6.3'  => [],
             'polymorphine.dev.0.6.0' => ['/some/path'],
             'zzold.tool.0.2.3'       => []
         ];
-        $this->assertSame(['phpunit.phpunit.9.6.3', 'zzold.tool.0.2.3'], $tracker->unusedTools());
         $this->assertData($expected, $tracker);
     }
 
@@ -140,9 +145,9 @@ class UsageRegistryTest extends TestCase
             'polymorphine.dev.0.6.0' => [],
             'zzold.tool.0.2.3'       => []
         ]);
-        $tracker->remove('new.tool.1.2.3');
-        $tracker->remove('no.entry.2.54.3-dev');
-        $tracker->remove('polymorphine.dev.0.6.0');
+        $tracker->remove(Identifier::fromInstallName('new.tool.1.2.3'));
+        $tracker->remove(Identifier::fromInstallName('no.entry.2.54.3-dev'));
+        $tracker->remove(Identifier::fromInstallName('polymorphine.dev.0.6.0'));
         $expected = [
             'phpunit.phpunit.9.6.3' => ['not/existing/path', 'some/path'],
             'zzold.tool.0.2.3'      => []
