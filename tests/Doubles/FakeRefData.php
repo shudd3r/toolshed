@@ -22,7 +22,7 @@ class FakeRefData extends RefData
     public function __construct(?array $toolRefs = null)
     {
         self::$toolRefs = $toolRefs ?? self::$toolRefs;
-        parent::__construct(VirtualDirectory::root('/'));
+        parent::__construct(VirtualDirectory::root('/', '/')->file('install.json'));
     }
 
     public function toolRefs(): array

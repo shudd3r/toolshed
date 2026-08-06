@@ -12,6 +12,7 @@
 namespace Shudd3r\Toolshed\Tests\Sync\RefData;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Toolshed\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Toolshed\Sync\RefData\LocalRefData;
 use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
@@ -35,31 +36,28 @@ class LocalRefDataTest extends TestCase
 
     public function testToolRefsMethod_WhenFileCannotBeRead_ReturnsEmptyArray()
     {
-        $data = $this->data($toolsDir);
-        $this->assertFalse($toolsDir->exists());
+        $data = $this->data($dataFile);
+        $this->assertFalse($dataFile->exists());
         $this->assertEmpty($data->toolRefs());
 
-        $toolsDir->create();
-        $this->assertEmpty($data->toolRefs());
-
-        $toolsDir->file('install-locations.json')->write('--- not json structure ---');
+        $dataFile->write('--- not json structure ---');
         $this->assertEmpty($data->toolRefs());
     }
 
     public function testToolRefsMethod_ForValidDataFile_ReturnsDecodedJsonStructure()
     {
-        $data = $this->data($toolsDir);
+        $data = $this->data($dataFile);
         $refs = ['foo.bar.1.2.3' => [self::$temp->pathname('existing/directory')]];
-        $this->writeData($toolsDir, $refs);
+        $this->writeData($dataFile, $refs);
         $this->assertSame($refs, $data->toolRefs());
     }
 
     public function testSaveMethod_CreatesValidMetaData()
     {
-        $data = $this->data($toolsDir);
+        $data = $this->data($dataFile);
         $data->save($refs = ['foo.bar.1.2.3' => [self::$temp->pathname('existing/directory')]]);
         $this->assertSame($refs, $data->toolRefs());
-        $this->assertSame($refs, json_decode($toolsDir->file('install-locations.json')->contents(), true));
+        $this->assertSame($refs, json_decode($dataFile->contents(), true));
     }
 
     public function testNotExistingLocations_AreFilteredOnRead()
@@ -70,22 +68,22 @@ class LocalRefDataTest extends TestCase
             self::$temp->pathname('not/existing/node')
         ];
 
-        $data = $this->data($toolsDir);
-        $this->writeData($toolsDir, ['foo.bar.1.2.3' => $locations]);
+        $data = $this->data($dataFile);
+        $this->writeData($dataFile, ['foo.bar.1.2.3' => $locations]);
 
         $expected = ['foo.bar.1.2.3' => [$locations[1]]];
         $this->assertSame($expected, $data->toolRefs());
     }
 
-    private function data(?VirtualDirectory &$toolsDir = null): LocalRefData
+    private function data(?VirtualFile &$dataFile = null): LocalRefData
     {
-        $toolsDir ??= VirtualDirectory::root('vfs://root')->subdirectory('shared-tools');
-        return new LocalRefData($toolsDir);
+        $dataFile ??= VirtualDirectory::root('vfs://root/shared-tools')->file('install-locations.json');
+        return new LocalRefData($dataFile);
     }
 
-    private function writeData(VirtualDirectory $toolsDir, array $data): void
+    private function writeData(VirtualFile $dataFile, array $data): void
     {
         $contents = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        $toolsDir->file('install-locations.json')->write($contents);
+        $dataFile->write($contents);
     }
 }

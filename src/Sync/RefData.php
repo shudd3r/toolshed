@@ -11,24 +11,24 @@
 
 namespace Shudd3r\Toolshed\Sync;
 
-use Shudd3r\Toolshed\Filesystem\Directory;
+use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Exception;
 
 
 abstract class RefData
 {
-    private Directory $toolsDirectory;
-    private ?array    $toolClientRefs = null;
+    private File   $dataFile;
+    private ?array $toolClientRefs = null;
 
-    public function __construct(Directory $toolsDirectory)
+    public function __construct(File $dataFile)
     {
-        $this->toolsDirectory = $toolsDirectory;
+        $this->dataFile = $dataFile;
     }
 
     /** @return array<string, array<string>> */
     public function toolRefs(): array
     {
-        $installData = $this->toolsDirectory->file('install-locations.json')->contents();
+        $installData = $this->dataFile->contents();
         $this->toolClientRefs = $installData ? json_decode($installData, true) ?? [] : [];
         return $this->existingInstallations($this->toolClientRefs);
     }
@@ -42,7 +42,7 @@ abstract class RefData
     {
         if ($toolRefs === $this->toolClientRefs) { return; }
         $contents = json_encode($toolRefs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        $this->toolsDirectory->file('install-locations.json')->write($contents);
+        $this->dataFile->write($contents);
     }
 
     abstract protected function directoryExists(string $directoryPath): bool;
