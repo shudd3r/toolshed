@@ -13,7 +13,10 @@ namespace Shudd3r\Toolshed\Tests\Sync;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Sync\UsageRegistry;
-use Shudd3r\Toolshed\Tests\Doubles\FakeRefData as Data;
+use Shudd3r\Toolshed\Tests\Doubles\FakeRefData;
+use Shudd3r\Toolshed\RequestedTools;
+use Shudd3r\Toolshed\Filesystem\Virtual;
+use Shudd3r\Toolshed\Tools\Identifier;
 
 
 class UsageRegistryTest extends TestCase
@@ -21,38 +24,57 @@ class UsageRegistryTest extends TestCase
     public function testMetaDataDestructor_SavesChanges()
     {
         $tracker = $this->tracker([]);
-        $tracker->update(['phpunit.phpunit.9.6.3'], 'some/path');
-        $this->assertSame([], Data::$toolRefs);
-        $this->assertData(['phpunit.phpunit.9.6.3' => ['some/path']], $tracker);
+        $requested = $this->requested('/some/path', [
+            Identifier::fromStrings('phpunit/phpunit', '9.6.3')
+        ]);
+
+        $tracker->update($requested);
+        $this->assertSame([], FakeRefData::$toolRefs);
+        $this->assertData(['phpunit.phpunit.9.6.3' => ['/some/path']], $tracker);
     }
 
     public function testNewToolsUpdate_AddsToolEntries()
     {
-        $tracker = $this->tracker(['phpunit.phpunit.9.6.3' => ['some/path']]);
-        $tracker->update(['vendor.package.dev-develop', 'polymorphine.dev.0.6.0'], 'different/path');
+        $tracker = $this->tracker(['phpunit.phpunit.9.6.3' => ['/some/path']]);
+        $requested = $this->requested('/different/path', [
+            Identifier::fromStrings('vendor/package', 'dev-develop'),
+            Identifier::fromStrings('polymorphine/dev', '0.6.0')
+        ]);
+
+        $tracker->update($requested);
         $expected = [
-            'phpunit.phpunit.9.6.3'      => ['some/path'],
-            'polymorphine.dev.0.6.0'     => ['different/path'],
-            'vendor.package.dev-develop' => ['different/path']
+            'phpunit.phpunit.9.6.3'      => ['/some/path'],
+            'polymorphine.dev.0.6.0'     => ['/different/path'],
+            'vendor.package.dev-develop' => ['/different/path']
         ];
         $this->assertData($expected, $tracker);
     }
 
     public function testExistingToolsUpdate_AddsLocations()
     {
-        $tracker = $this->tracker(['phpunit.phpunit.9.6.3' => ['some/path']]);
-        $tracker->update(['phpunit.phpunit.9.6.3', 'new.tool.1.2.3'], 'different/path');
+        $tracker = $this->tracker(['phpunit.phpunit.9.6.3' => ['/some/path']]);
+        $requested = $this->requested('/different/path', [
+            Identifier::fromStrings('phpunit/phpunit', '9.6.3'),
+            Identifier::fromStrings('new/tool', '1.2.3')
+        ]);
+
+        $tracker->update($requested);
         $expected = [
-            'new.tool.1.2.3'        => ['different/path'],
-            'phpunit.phpunit.9.6.3' => ['different/path', 'some/path']
+            'new.tool.1.2.3'        => ['/different/path'],
+            'phpunit.phpunit.9.6.3' => ['/different/path', '/some/path']
         ];
         $this->assertData($expected, $tracker);
 
         $tracker = $this->tracker();
-        $tracker->update(['phpunit.phpunit.9.6.3', 'new.tool.1.2.3'], 'zzz/path');
+        $requested = $this->requested('/zzz/path', [
+            Identifier::fromStrings('phpunit/phpunit', '9.6.3'),
+            Identifier::fromStrings('new/tool', '1.2.3')
+        ]);
+
+        $tracker->update($requested);
         $expected = [
-            'new.tool.1.2.3'        => ['different/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3' => ['different/path', 'some/path', 'zzz/path']
+            'new.tool.1.2.3'        => ['/different/path', '/zzz/path'],
+            'phpunit.phpunit.9.6.3' => ['/different/path', '/some/path', '/zzz/path']
         ];
         $this->assertData($expected, $tracker);
     }
@@ -60,43 +82,58 @@ class UsageRegistryTest extends TestCase
     public function testPathForNotRequiredTool_IsRemoved()
     {
         $tracker = $this->tracker([
-            'new.tool.1.2.3'        => ['different/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3' => ['different/path', 'some/path', 'zzz/path']
+            'new.tool.1.2.3'        => ['/different/path', '/zzz/path'],
+            'phpunit.phpunit.9.6.3' => ['/different/path', '/some/path', '/zzz/path']
         ]);
-        $tracker->update(['new.tool.1.2.3'], 'zzz/path');
+        $requested = $this->requested('/zzz/path', [
+            Identifier::fromStrings('new/tool', '1.2.3')
+        ]);
+
+        $tracker->update($requested);
         $expected = [
-            'new.tool.1.2.3'        => ['different/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3' => ['different/path', 'some/path']
+            'new.tool.1.2.3'        => ['/different/path', '/zzz/path'],
+            'phpunit.phpunit.9.6.3' => ['/different/path', '/some/path']
         ];
         $this->assertData($expected, $tracker);
 
-        $tracker = $this->tracker();
-        $tracker->update([], 'different/path');
+        $tracker   = $this->tracker();
+        $requested = $this->requested('/different/path', []);
+        $tracker->update($requested);
         $expected = [
-            'new.tool.1.2.3'        => ['zzz/path'],
-            'phpunit.phpunit.9.6.3' => ['some/path']
+            'new.tool.1.2.3'        => ['/zzz/path'],
+            'phpunit.phpunit.9.6.3' => ['/some/path']
         ];
         $this->assertData($expected, $tracker);
     }
 
-    public function testUnusedTools_ReturnsListOfToolsWithoutLocations()
+    public function testUnusedTools_ReturnsListOfToolIdentifiersWithoutLocations()
     {
         $tracker = $this->tracker([
-            'new.tool.1.2.3'         => ['some/path', 'zzz/path'],
-            'phpunit.phpunit.9.6.3'  => ['some/path'],
-            'polymorphine.dev.0.6.0' => ['some/path'],
+            'new.tool.1.2.3'         => ['/some/path', '/zzz/path'],
+            'phpunit.phpunit.9.6.3'  => ['/some/path'],
+            'polymorphine.dev.0.6.0' => ['/some/path'],
             'zzold.tool.0.2.3'       => []
         ]);
-        $this->assertSame(['zzold.tool.0.2.3'], $tracker->unusedTools());
+        $this->assertEquals([Identifier::fromInstallName('zzold.tool.0.2.3')], $tracker->unusedTools());
 
-        $tracker->update(['new.tool.1.2.3', 'polymorphine.dev.0.6.0'], 'some/path');
+        $requested = $this->requested('/some/path', [
+            Identifier::fromStrings('new/tool', '1.2.3'),
+            Identifier::fromStrings('polymorphine/dev', '0.6.0')
+        ]);
+
+        $tracker->update($requested);
+        $unused = [
+            Identifier::fromInstallName('phpunit.phpunit.9.6.3'),
+            Identifier::fromInstallName('zzold.tool.0.2.3')
+        ];
+        $this->assertEquals($unused, $tracker->unusedTools());
+
         $expected = [
-            'new.tool.1.2.3'         => ['some/path', 'zzz/path'],
+            'new.tool.1.2.3'         => ['/some/path', '/zzz/path'],
             'phpunit.phpunit.9.6.3'  => [],
-            'polymorphine.dev.0.6.0' => ['some/path'],
+            'polymorphine.dev.0.6.0' => ['/some/path'],
             'zzold.tool.0.2.3'       => []
         ];
-        $this->assertSame(['phpunit.phpunit.9.6.3', 'zzold.tool.0.2.3'], $tracker->unusedTools());
         $this->assertData($expected, $tracker);
     }
 
@@ -107,10 +144,10 @@ class UsageRegistryTest extends TestCase
             'phpunit.phpunit.9.6.3'  => ['not/existing/path', 'some/path'],
             'polymorphine.dev.0.6.0' => [],
             'zzold.tool.0.2.3'       => []
-        ], ['not/existing/path']);
-        $tracker->remove('new.tool.1.2.3');
-        $tracker->remove('no.entry.2.54.3-dev');
-        $tracker->remove('polymorphine.dev.0.6.0');
+        ]);
+        $tracker->remove(Identifier::fromInstallName('new.tool.1.2.3'));
+        $tracker->remove(Identifier::fromInstallName('no.entry.2.54.3-dev'));
+        $tracker->remove(Identifier::fromInstallName('polymorphine.dev.0.6.0'));
         $expected = [
             'phpunit.phpunit.9.6.3' => ['not/existing/path', 'some/path'],
             'zzold.tool.0.2.3'      => []
@@ -121,11 +158,16 @@ class UsageRegistryTest extends TestCase
     private function assertData(array $expected, UsageRegistry &$toolClients): void
     {
         $toolClients = null;
-        $this->assertSame($expected, Data::$toolRefs);
+        $this->assertSame($expected, FakeRefData::$toolRefs);
     }
 
     private function tracker(?array $installations = null): UsageRegistry
     {
-        return new UsageRegistry(new Data($installations));
+        return new UsageRegistry(new FakeRefData($installations));
+    }
+
+    private function requested(string $directoryPath, array $identifiers): RequestedTools
+    {
+        return new RequestedTools(Virtual\VirtualDirectory::root($directoryPath), $identifiers);
     }
 }

@@ -11,6 +11,9 @@
 
 namespace Shudd3r\Toolshed\Sync;
 
+use Shudd3r\Toolshed\RequestedTools;
+use Shudd3r\Toolshed\Tools\Identifier;
+
 
 class UsageRegistry
 {
@@ -22,10 +25,12 @@ class UsageRegistry
         $this->refData = $refData;
     }
 
-    public function update(array $toolVersions, string $clientBinDir): void
+    public function update(RequestedTools $tools): void
     {
+        $clientBinDir = str_replace('\\', '/', (string) $tools->clientBinDirectory());
+        $toolVersions = array_map(fn (Identifier $id): string => $id->installName(), $tools->toolIdentifiers());
+
         $this->toolRefs ??= $this->refData->toolRefs();
-        $clientBinDir = str_replace('\\', '/', $clientBinDir);
         foreach ($this->toolRefs as $packageVer => &$locations) {
             $toolFound = in_array($packageVer, $toolVersions, true);
             $pathFound = in_array($clientBinDir, $locations, true);
@@ -48,18 +53,18 @@ class UsageRegistry
     public function unusedTools(): array
     {
         $this->toolRefs ??= $this->refData->toolRefs();
-        return array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
+        $installNames = array_keys(array_filter($this->toolRefs, fn (array $locations) => $locations === []));
+        return array_map(fn (string $installName) => Identifier::fromInstallName($installName), $installNames);
     }
 
-    public function remove(string $tool): void
+    public function remove(Identifier $tool): void
     {
         $this->toolRefs ??= $this->refData->toolRefs();
-        unset($this->toolRefs[$tool]);
+        unset($this->toolRefs[$tool->installName()]);
     }
 
     public function __destruct()
     {
-        if (!isset($this->toolRefs)) { return; }
-        $this->refData->save($this->toolRefs);
+        isset($this->toolRefs) && $this->refData->save($this->toolRefs);
     }
 }

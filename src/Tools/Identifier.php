@@ -20,6 +20,16 @@ use LogicException;
 
 class Identifier
 {
+    public static function fromInstallName(string $installName): self
+    {
+        [$vendor, $package, $version] = explode('.', $installName, 3) + [null, '', ''];
+        if (!$version || $version === 'unresolved') {
+            throw new InvalidArgumentException('Install name must contain full package name & version number');
+        }
+
+        return self::fromStrings($vendor . '/' . $package, $version);
+    }
+
     public static function fromStrings(string $name, string $version = '*', string $phpVersion = '*'): self
     {
         return new self($name, self::parseConstraint($version), self::parseConstraint($phpVersion));
