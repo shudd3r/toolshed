@@ -17,22 +17,22 @@ use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 
 class FakeRefData extends RefData
 {
-    public static array $toolRefs = [];
+    private array $toolRefs;
 
-    public function __construct(?array $toolRefs = null)
+    public function __construct(array $toolRefs = [])
     {
-        self::$toolRefs = $toolRefs ?? self::$toolRefs;
+        $this->toolRefs = $toolRefs;
         parent::__construct(VirtualDirectory::root('/', '/')->file('install.json'));
     }
 
     public function toolRefs(): array
     {
-        return self::$toolRefs;
+        return $this->toolRefs;
     }
 
     public function save(array $toolRefs): void
     {
-        self::$toolRefs = $toolRefs;
+        $this->toolRefs = $toolRefs;
     }
 
     protected function directoryExists(string $directoryPath): bool

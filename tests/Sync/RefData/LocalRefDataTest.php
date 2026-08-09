@@ -12,8 +12,8 @@
 namespace Shudd3r\Toolshed\Tests\Sync\RefData;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Toolshed\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Toolshed\Sync\RefData\LocalRefData;
+use Shudd3r\Toolshed\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Toolshed\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Toolshed\Tests\Fixtures\TempFiles;
 
