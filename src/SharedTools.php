@@ -12,22 +12,27 @@
 namespace Shudd3r\Toolshed;
 
 use Shudd3r\Toolshed\Sync\UsageRegistry;
+use Composer\IO\IOInterface;
 
 
 class SharedTools
 {
     private Tools         $tools;
     private UsageRegistry $registry;
+    private IOInterface   $io;
 
-    public function __construct(Tools $tools, UsageRegistry $registry)
+    public function __construct(Tools $tools, UsageRegistry $registry, IOInterface $io)
     {
         $this->tools    = $tools;
         $this->registry = $registry;
+        $this->io       = $io;
     }
 
     public function update(RequestedTools $requestedTools): void
     {
         foreach ($requestedTools->toolIdentifiers() as $requestedTool) {
+            $message = '<info> - Updating tool %s</info>';
+            $this->io->write(sprintf($message, $requestedTool->packageName()));
             $tool = $this->tools->install($requestedTool);
             $requestedTools->update($tool->identifier());
         }
@@ -35,6 +40,8 @@ class SharedTools
         $this->registry->update($requestedTools);
 
         foreach ($this->registry->unusedTools() as $unusedTool) {
+            $message = '<info> - Removing unused tool %s</info>';
+            $this->io->write(sprintf($message, $unusedTool->packageName()));
             $this->tools->remove($unusedTool);
             $this->registry->remove($unusedTool);
         }

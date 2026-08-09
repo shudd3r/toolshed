@@ -19,13 +19,14 @@ use Shudd3r\Toolshed\Tools\Identifier;
 use Shudd3r\Toolshed\Filesystem\Virtual;
 use Shudd3r\Toolshed\Tests\Doubles\FakeRefData;
 use Shudd3r\Toolshed\Tests\Doubles\FakeTools;
+use Shudd3r\Toolshed\Tests\Doubles\FakeIO;
 
 
 class SharedToolsTest extends TestCase
 {
     public function testToolsRequestChangesState()
     {
-        $sharedTools = $this->sharedTools($tools, $refData);
+        $sharedTools = $this->sharedTools($tools, $refData, $io);
         $refData->save([
             'foo.tool.1.2.2'  => ['/foo/client', '/another/client'],
             'bar.tool.1.2.4'  => ['/another/client'],
@@ -41,6 +42,11 @@ class SharedToolsTest extends TestCase
 
         $this->assertSame($requestedTools, $tools->installed);
         $this->assertEquals([Identifier::fromInstallName('some.tool.2.3.4')], $tools->removed);
+        $this->assertSame([
+            '<info> - Updating tool foo/tool</info>',
+            '<info> - Updating tool bar/tool</info>',
+            '<info> - Removing unused tool some/tool</info>'
+        ], $io->messages);
 
         unset($sharedTools);
         $this->assertEquals([
@@ -50,8 +56,11 @@ class SharedToolsTest extends TestCase
         ], $refData->toolRefs());
     }
 
-    private function sharedTools(?FakeTools &$tools = null, ?FakeRefData &$refData = null): SharedTools
+    private function sharedTools(?FakeTools &$tools, ?FakeRefData &$refData, ?FakeIO &$io): SharedTools
     {
-        return new SharedTools($tools ??= new FakeTools(), new UsageRegistry($refData ??= new FakeRefData()));
+        $tools ??= new FakeTools();
+        $refData ??= new FakeRefData();
+        $io ??= new FakeIO();
+        return new SharedTools($tools, new UsageRegistry($refData), $io);
     }
 }
