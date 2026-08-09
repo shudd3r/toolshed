@@ -57,10 +57,14 @@ class Identifier
         return $this->name;
     }
 
+    public function version(): string
+    {
+        return $this->isResolved() ? $this->version->getPrettyString() : 'unresolved';
+    }
+
     public function installName(): string
     {
-        $version = $this->isResolved() ? $this->version->getPrettyString() : 'unresolved';
-        return str_replace('/', '.', $this->name) . '.' . $version;
+        return str_replace('/', '.', $this->name) . '.' . $this->version();
     }
 
     public function isResolved(): bool
