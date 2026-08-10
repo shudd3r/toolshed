@@ -23,6 +23,7 @@ class FakeTools extends Tools
     public array $removed   = [];
 
     private VirtualDirectory $directory;
+    private ?Identifier      $exceptionId = null;
 
     public function __construct()
     {
@@ -32,6 +33,9 @@ class FakeTools extends Tools
 
     public function install(Identifier $tool): Tool
     {
+        if ($this->exceptionId && $tool->installName() === $this->exceptionId->installName()) {
+            throw new Tools\Exception\ToolSetupException('This is exception message.');
+        }
         $this->installed[] = $tool;
         return new Tool($tool, $this->directory);
     }
@@ -39,5 +43,10 @@ class FakeTools extends Tools
     public function remove(Identifier $tool): void
     {
         $this->removed[] = $tool;
+    }
+
+    public function throwExceptionFor(Identifier $tool): void
+    {
+        $this->exceptionId = $tool;
     }
 }

@@ -20,6 +20,7 @@ use Shudd3r\Toolshed\Filesystem\Virtual;
 use Shudd3r\Toolshed\Tests\Doubles\FakeRefData;
 use Shudd3r\Toolshed\Tests\Doubles\FakeTools;
 use Shudd3r\Toolshed\Tests\Doubles\FakeIO;
+use Composer\IO\IOInterface;
 
 
 class SharedToolsTest extends TestCase
@@ -44,6 +45,41 @@ class SharedToolsTest extends TestCase
         $this->assertEquals([Identifier::fromInstallName('some.tool.2.3.4')], $tools->removed);
         $this->assertSame([
             '  - Updating tool <info>foo/tool</info> (<comment>1.2.3</comment>)',
+            '  - Updating tool <info>bar/tool</info> (<comment>1.2.4</comment>)',
+            '  - Removing unused tool <info>some/tool</info> (<comment>2.3.4</comment>)'
+        ], $io->errors);
+
+        unset($sharedTools);
+        $this->assertEquals([
+            'foo.tool.1.2.2' => ['/another/client'],
+            'foo.tool.1.2.3' => ['/foo/client'],
+            'bar.tool.1.2.4' => ['/another/client', '/foo/client']
+        ], $refData->toolRefs());
+    }
+
+    public function testFailedToolInstallation()
+    {
+        $io          = new FakeIO(IOInterface::VERBOSE);
+        $sharedTools = $this->sharedTools($tools, $refData, $io);
+        $refData->save([
+            'foo.tool.1.2.2'  => ['/foo/client', '/another/client'],
+            'bar.tool.1.2.4'  => ['/another/client'],
+            'some.tool.2.3.4' => ['/foo/client']
+        ]);
+        $requestedTools = [
+            $failed = Identifier::fromInstallName('foo.tool.1.2.3'),
+            Identifier::fromInstallName('bar.tool.1.2.4')
+        ];
+        $request = new RequestedTools(Virtual\VirtualDirectory::root('/foo/client', '/'), $requestedTools);
+        $tools->throwExceptionFor($failed);
+
+        $sharedTools->update($request);
+
+        $this->assertSame([$requestedTools[1]], $tools->installed);
+        $this->assertEquals([Identifier::fromInstallName('some.tool.2.3.4')], $tools->removed);
+        $this->assertSame([
+            '  - Updating tool <info>foo/tool</info> ...FAILED',
+            'This is exception message.',
             '  - Updating tool <info>bar/tool</info> (<comment>1.2.4</comment>)',
             '  - Removing unused tool <info>some/tool</info> (<comment>2.3.4</comment>)'
         ], $io->errors);

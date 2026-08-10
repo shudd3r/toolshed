@@ -21,19 +21,33 @@ class FakeIO extends NullIO
 
     private bool $newMsgline   = true;
     private bool $newErrorLine = true;
+    private int  $verbosity;
+
+    public function __construct(int $verbosity = self::NORMAL)
+    {
+        $this->verbosity = $verbosity;
+    }
 
     public function write($messages, bool $newline = true, int $verbosity = self::NORMAL): void
     {
+        if ($this->verbosity < $verbosity) {
+            $this->resetNewLines();
+            return;
+        }
         $this->writeInto($messages, $this->newMsgline, $this->messages);
         $this->newMsgline   = $newline;
-        $this->newErrorLine = !$newline;
+        $this->newErrorLine = true;
     }
 
     public function writeError($messages, bool $newline = true, int $verbosity = self::NORMAL): void
     {
+        if ($this->verbosity < $verbosity) {
+            $this->resetNewLines();
+            return;
+        }
         $this->writeInto($messages, $this->newErrorLine, $this->errors);
         $this->newErrorLine = $newline;
-        $this->newMsgline   = !$newline;
+        $this->newMsgline   = true;
     }
 
     private function writeInto($messages, bool $newline, &$thisMessages): void
@@ -56,5 +70,11 @@ class FakeIO extends NullIO
             $lastMessage .= $message;
         }
         $thisMessages[] = $lastMessage;
+    }
+
+    private function resetNewLines(): void
+    {
+        $this->newMsgline   = true;
+        $this->newErrorLine = true;
     }
 }

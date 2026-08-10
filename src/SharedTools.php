@@ -13,6 +13,7 @@ namespace Shudd3r\Toolshed;
 
 use Shudd3r\Toolshed\Sync\UsageRegistry;
 use Composer\IO\IOInterface;
+use Shudd3r\Toolshed\Tools\Exception\ToolSetupException;
 
 
 class SharedTools
@@ -33,9 +34,14 @@ class SharedTools
         foreach ($requestedTools->toolIdentifiers() as $requestedTool) {
             $message = '  - Updating tool <info>%s</info>';
             $this->io->writeError(sprintf($message, $requestedTool->packageName()), false);
-            $tool = $this->tools->install($requestedTool);
-            $requestedTools->update($tool->identifier());
-            $this->io->writeError(sprintf(' (<comment>%s</comment>)', $tool->identifier()->version()));
+            try {
+                $tool = $this->tools->install($requestedTool);
+                $requestedTools->update($tool->identifier());
+                $this->io->writeError(sprintf(' (<comment>%s</comment>)', $tool->identifier()->version()));
+            } catch (ToolSetupException $ex) {
+                $this->io->writeError(' ...FAILED');
+                $this->io->writeError($ex->getMessage(), true, IOInterface::VERBOSE);
+            }
         }
 
         $this->registry->update($requestedTools);
