@@ -43,10 +43,10 @@ class SharedToolsTest extends TestCase
         $this->assertSame($requestedTools, $tools->installed);
         $this->assertEquals([Identifier::fromInstallName('some.tool.2.3.4')], $tools->removed);
         $this->assertSame([
-            '<info> - Updating tool foo/tool</info>',
-            '<info> - Updating tool bar/tool</info>',
-            '<info> - Removing unused tool some/tool</info>'
-        ], $io->messages);
+            '  - Updating tool <info>foo/tool</info> (<comment>1.2.3</comment>)',
+            '  - Updating tool <info>bar/tool</info> (<comment>1.2.4</comment>)',
+            '  - Removing unused tool <info>some/tool</info> (<comment>2.3.4</comment>)'
+        ], $io->errors);
 
         unset($sharedTools);
         $this->assertEquals([

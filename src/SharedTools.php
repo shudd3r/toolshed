@@ -31,17 +31,18 @@ class SharedTools
     public function update(RequestedTools $requestedTools): void
     {
         foreach ($requestedTools->toolIdentifiers() as $requestedTool) {
-            $message = '<info> - Updating tool %s</info>';
-            $this->io->write(sprintf($message, $requestedTool->packageName()));
+            $message = '  - Updating tool <info>%s</info>';
+            $this->io->writeError(sprintf($message, $requestedTool->packageName()), false);
             $tool = $this->tools->install($requestedTool);
             $requestedTools->update($tool->identifier());
+            $this->io->writeError(sprintf(' (<comment>%s</comment>)', $tool->identifier()->version()));
         }
 
         $this->registry->update($requestedTools);
 
         foreach ($this->registry->unusedTools() as $unusedTool) {
-            $message = '<info> - Removing unused tool %s</info>';
-            $this->io->write(sprintf($message, $unusedTool->packageName()));
+            $message = '  - Removing unused tool <info>%s</info> (<comment>%s</comment>)';
+            $this->io->writeError(sprintf($message, $unusedTool->packageName(), $unusedTool->version()));
             $this->tools->remove($unusedTool);
             $this->registry->remove($unusedTool);
         }

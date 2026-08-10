@@ -17,14 +17,44 @@ use Composer\IO\NullIO;
 class FakeIO extends NullIO
 {
     public array $messages = [];
+    public array $errors   = [];
+
+    private bool $newMsgline   = true;
+    private bool $newErrorLine = true;
 
     public function write($messages, bool $newline = true, int $verbosity = self::NORMAL): void
     {
-        $this->messages[] = $messages;
+        $this->writeInto($messages, $this->newMsgline, $this->messages);
+        $this->newMsgline   = $newline;
+        $this->newErrorLine = !$newline;
     }
 
     public function writeError($messages, bool $newline = true, int $verbosity = self::NORMAL): void
     {
-        $this->messages[] = $messages;
+        $this->writeInto($messages, $this->newErrorLine, $this->errors);
+        $this->newErrorLine = $newline;
+        $this->newMsgline   = !$newline;
+    }
+
+    private function writeInto($messages, bool $newline, &$thisMessages): void
+    {
+        if (!$newline && $thisMessages) {
+            $this->joinLastLine(is_array($messages) ? array_shift($messages) : $messages, $thisMessages);
+            if (is_string($messages) || !$messages) { return; }
+        }
+
+        $thisMessages[] = $messages;
+    }
+
+    private function joinLastLine(string $message, &$thisMessages): void
+    {
+        $lastMessage = array_pop($thisMessages);
+        if (is_array($lastMessage)) {
+            $lastLine = array_pop($lastMessage);
+            $lastMessage[] = $lastLine . $message;
+        } else {
+            $lastMessage .= $message;
+        }
+        $thisMessages[] = $lastMessage;
     }
 }
