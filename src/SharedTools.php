@@ -14,6 +14,7 @@ namespace Shudd3r\Toolshed;
 use Shudd3r\Toolshed\Sync\UsageRegistry;
 use Composer\IO\IOInterface;
 use Shudd3r\Toolshed\Tools\Exception\ToolSetupException;
+use Shudd3r\Toolshed\Tools\Identifier;
 
 
 class SharedTools
@@ -41,6 +42,7 @@ class SharedTools
             } catch (ToolSetupException $ex) {
                 $this->io->writeError(' ...FAILED');
                 $this->io->writeError($ex->getMessage(), true, IOInterface::VERBOSE);
+                $requestedTools->update(Identifier::fromStrings($requestedTool->packageName()));
             }
         }
 

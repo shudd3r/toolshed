@@ -87,7 +87,6 @@ class SharedToolsTest extends TestCase
         unset($sharedTools);
         $this->assertEquals([
             'foo.tool.1.2.2' => ['/another/client'],
-            'foo.tool.1.2.3' => ['/foo/client'],
             'bar.tool.1.2.4' => ['/another/client', '/foo/client']
         ], $refData->toolRefs());
     }
