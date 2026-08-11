@@ -28,16 +28,7 @@ class SharedToolsTest extends TestCase
     public function testToolsRequestChangesState()
     {
         $sharedTools = $this->sharedTools($tools, $refData, $io);
-        $refData->save([
-            'foo.tool.1.2.2'  => ['/foo/client', '/another/client'],
-            'bar.tool.1.2.4'  => ['/another/client'],
-            'some.tool.2.3.4' => ['/foo/client']
-        ]);
-        $requestedTools = [
-            Identifier::fromInstallName('foo.tool.1.2.3'),
-            Identifier::fromInstallName('bar.tool.1.2.4')
-        ];
-        $request = new RequestedTools(Virtual\VirtualDirectory::root('/foo/client', '/'), $requestedTools);
+        $request     = $this->request($clientBinDir, $requestedTools);
 
         $sharedTools->update($request);
 
@@ -49,29 +40,20 @@ class SharedToolsTest extends TestCase
             '  - Removing unused tool <info>some/tool</info> (<comment>2.3.4</comment>)'
         ], $io->errors);
 
-        unset($sharedTools);
-        $this->assertEquals([
-            'foo.tool.1.2.2' => ['/another/client'],
-            'foo.tool.1.2.3' => ['/foo/client'],
-            'bar.tool.1.2.4' => ['/another/client', '/foo/client']
-        ], $refData->toolRefs());
+        $this->assertData([
+            'foo.tool.1.2.2' => ['/another/client/vendor/bin'],
+            'foo.tool.1.2.3' => ['/foo/client/vendor/bin'],
+            'bar.tool.1.2.4' => ['/another/client/vendor/bin', '/foo/client/vendor/bin']
+        ], $refData, $sharedTools);
     }
 
     public function testFailedToolInstallation()
     {
         $io          = new FakeIO(IOInterface::VERBOSE);
         $sharedTools = $this->sharedTools($tools, $refData, $io);
-        $refData->save([
-            'foo.tool.1.2.2'  => ['/foo/client', '/another/client'],
-            'bar.tool.1.2.4'  => ['/another/client'],
-            'some.tool.2.3.4' => ['/foo/client']
-        ]);
-        $requestedTools = [
-            $failed = Identifier::fromInstallName('foo.tool.1.2.3'),
-            Identifier::fromInstallName('bar.tool.1.2.4')
-        ];
-        $request = new RequestedTools(Virtual\VirtualDirectory::root('/foo/client', '/'), $requestedTools);
-        $tools->throwExceptionFor($failed);
+        $tools->throwExceptionFor($failed = Identifier::fromInstallName('foo.tool.1.2.3'));
+        $requestedTools = [$failed, Identifier::fromInstallName('bar.tool.1.2.4')];
+        $request        = $this->request($clientBinDir, $requestedTools);
 
         $sharedTools->update($request);
 
@@ -84,11 +66,16 @@ class SharedToolsTest extends TestCase
             '  - Removing unused tool <info>some/tool</info> (<comment>2.3.4</comment>)'
         ], $io->errors);
 
-        unset($sharedTools);
-        $this->assertEquals([
-            'foo.tool.1.2.2' => ['/another/client'],
-            'bar.tool.1.2.4' => ['/another/client', '/foo/client']
-        ], $refData->toolRefs());
+        $this->assertData([
+            'foo.tool.1.2.2' => ['/another/client/vendor/bin'],
+            'bar.tool.1.2.4' => ['/another/client/vendor/bin', '/foo/client/vendor/bin']
+        ], $refData, $sharedTools);
+    }
+
+    private function assertData(array $expectedData, FakeRefData $refData, SharedTools &$tools): void
+    {
+        $tools = null;
+        $this->assertEquals($expectedData, $refData->toolRefs());
     }
 
     private function sharedTools(?FakeTools &$tools, ?FakeRefData &$refData, ?FakeIO &$io): SharedTools
@@ -96,6 +83,20 @@ class SharedToolsTest extends TestCase
         $tools ??= new FakeTools();
         $refData ??= new FakeRefData();
         $io ??= new FakeIO();
+
+        $refData->save([
+            'foo.tool.1.2.2'  => ['/foo/client/vendor/bin', '/another/client/vendor/bin'],
+            'bar.tool.1.2.4'  => ['/another/client/vendor/bin'],
+            'some.tool.2.3.4' => ['/foo/client/vendor/bin']
+        ]);
+
         return new SharedTools($tools, new UsageRegistry($refData), $io);
+    }
+
+    private function request(?Virtual\VirtualDirectory &$clientBinDir, ?array &$tools): RequestedTools
+    {
+        $clientBinDir ??= Virtual\VirtualDirectory::root('/foo/client/vendor/bin', '/');
+        $tools ??= [Identifier::fromInstallName('foo.tool.1.2.3'), Identifier::fromInstallName('bar.tool.1.2.4')];
+        return new RequestedTools($clientBinDir, $tools);
     }
 }
