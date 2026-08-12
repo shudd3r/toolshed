@@ -50,6 +50,7 @@ class UsageRegistry
         ksort($this->toolRefs);
     }
 
+    /** @return array<Identifier> */
     public function unusedTools(): array
     {
         $this->toolRefs ??= $this->refData->toolRefs();

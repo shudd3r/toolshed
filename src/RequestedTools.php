@@ -35,12 +35,12 @@ class RequestedTools
     /** @return array<Identifier> */
     public function toolIdentifiers(): array
     {
-        return array_values($this->toolIdentifiers);
+        return array_values(array_filter($this->toolIdentifiers));
     }
 
     public function update(Identifier $tool): void
     {
-        $this->toolIdentifiers[$tool->packageName()] = $tool;
+        $this->toolIdentifiers[$tool->packageName()] = $tool->isResolved() ? $tool : null;
     }
 
     private function indexedIdentifiers(Identifier ...$identifiers): array

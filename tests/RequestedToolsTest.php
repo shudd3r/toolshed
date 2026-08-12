@@ -21,17 +21,31 @@ class RequestedToolsTest extends TestCase
 {
     public function testInstanceDataMethods()
     {
-        $clientBinDirectory = Virtual\VirtualDirectory::root('/usr/home/project/vendor/bin');
-        $toolIdentifiers = [
-            Identifier::fromStrings('phpunit/phpunit', '^9.5', '^7.4 || ^8.0'),
-            Identifier::fromStrings('polymorphine/dev', '0.6.0')
-        ];
+        $request = $this->request($clientBinDirectory, $toolIdentifiers);
 
-        $request = new RequestedTools($clientBinDirectory, $toolIdentifiers);
         $this->assertSame($clientBinDirectory, $request->clientBinDirectory());
         $this->assertSame($toolIdentifiers, $request->toolIdentifiers());
 
         $request->update($resolved = Identifier::fromStrings('phpunit/phpunit', '9.8.11'));
         $this->assertSame([$resolved] + $toolIdentifiers, $request->toolIdentifiers());
+    }
+
+    public function testUpdateWithUnresolvedIdentifier_RemovesItFromList()
+    {
+        $request = $this->request($clientBinDirectory, $toolIdentifiers);
+
+        $request->update(Identifier::fromStrings('phpunit/phpunit'));
+        $this->assertSame([$toolIdentifiers[1]], $request->toolIdentifiers());
+    }
+
+    private function request(?Virtual\VirtualDirectory &$clientBinDirectory, ?array &$toolIdentifiers): RequestedTools
+    {
+        $clientBinDirectory ??= Virtual\VirtualDirectory::root('/usr/home/project/vendor/bin');
+        $toolIdentifiers ??= [
+            Identifier::fromStrings('phpunit/phpunit', '^9.5', '^7.4 || ^8.0'),
+            Identifier::fromStrings('polymorphine/dev', '0.6.0')
+        ];
+
+        return new RequestedTools($clientBinDirectory, $toolIdentifiers);
     }
 }
