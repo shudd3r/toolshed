@@ -22,12 +22,13 @@ class FakeTools extends Tools
     public array $installed = [];
     public array $removed   = [];
 
-    private VirtualDirectory $directory;
-    private ?Identifier      $exceptionId = null;
+    public VirtualDirectory $directory;
+
+    private ?Identifier $exceptionId = null;
 
     public function __construct()
     {
-        $this->directory = VirtualDirectory::root('vfs://root/shared-tools');
+        $this->directory = VirtualDirectory::root('vfs://root/composer-global', '/');
         parent::__construct(new FakeProcessExecutor(), $this->directory);
     }
 
@@ -37,7 +38,8 @@ class FakeTools extends Tools
             throw new Tools\Exception\ToolSetupException('This is exception message.');
         }
         $this->installed[] = $tool;
-        return new Tool($tool, $this->directory);
+        $toolDir = $this->directory->subdirectory('shared-tools/' . $tool->installName() . '/vendor/bin');
+        return new Tool($tool, $toolDir);
     }
 
     public function remove(Identifier $tool): void

@@ -15,6 +15,8 @@ use Shudd3r\Toolshed\Sync\UsageRegistry;
 use Composer\IO\IOInterface;
 use Shudd3r\Toolshed\Tools\Exception\ToolSetupException;
 use Shudd3r\Toolshed\Tools\Identifier;
+use Shudd3r\Toolshed\Filesystem\Directory;
+use Shudd3r\Toolshed\Filesystem\File;
 
 
 class SharedTools
@@ -39,6 +41,7 @@ class SharedTools
                 $tool = $this->tools->install($requestedTool);
                 $requestedTools->update($tool->identifier());
                 $this->io->writeError(sprintf(' (<comment>%s</comment>)', $tool->identifier()->version()));
+                $this->linkBinaries($tool->binaries(), $requestedTools->clientBinDirectory());
             } catch (ToolSetupException $ex) {
                 $this->io->writeError(' ...FAILED');
                 $this->io->writeError($ex->getMessage(), true, IOInterface::VERBOSE);
@@ -54,5 +57,36 @@ class SharedTools
             $this->tools->remove($unusedTool);
             $this->registry->remove($unusedTool);
         }
+    }
+
+    private function linkBinaries(Directory $toolBinaries, Directory $clientBinDirectory): void
+    {
+        $linkContents = $this->linkContents($toolBinaries);
+        $isExecutable = static fn (File $file): bool => strpos(basename($file->name()), '.') === false;
+        foreach ($toolBinaries->files(false, $isExecutable) as $file) {
+            $name = basename($file->name());
+            $toolBinaries->file($name . '.php')->write($this->phpContents($file->contents()));
+            $file->write($linkContents);
+            $clientBinDirectory->file($name)->write($linkContents);
+            $batFile = $toolBinaries->file($name . '.bat');
+            $batFile->exists() && $clientBinDirectory->file($name . '.bat')->write($batFile->contents());
+        }
+    }
+
+    private function phpContents(string $contents): string
+    {
+        return substr($contents, strpos($contents, '<?php'));
+    }
+
+    private function linkContents(Directory $toolBinaries): string
+    {
+        $link = <<<'PHP'
+            #!/usr/bin/env php
+            <?php
+            $toolBinaries = getenv('COMPOSER_HOME') . '/%s/';
+            return include $toolBinaries . basename(__FILE__) . '.php';
+            PHP;
+
+        return sprintf($link, $toolBinaries->name());
     }
 }
