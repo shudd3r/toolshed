@@ -194,6 +194,14 @@ abstract class FilesystemTests extends TestCase
             $root->subdirectory('bar'),
             $root->subdirectory('foo/bar')
         ]);
+
+        $this->assertNodes($root->subdirectory('foo/bar')->subdirectories(), [
+            $root->subdirectory('foo/bar/baz')
+        ]);
+
+        $this->assertNodes($root->subdirectory('foo/bar')->subdirectories(true), [
+            $root->subdirectory('foo/bar/baz')
+        ]);
     }
 
     public static function invalidNames(): array

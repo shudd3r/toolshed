@@ -103,9 +103,11 @@ class VirtualDirectory extends Directory
 
     private function containsNode(string $name, bool $directly): bool
     {
-        $isRoot   = $this->isRoot();
-        $contains = $isRoot || strncmp($name, $this->name(), strlen($this->name())) === 0;
+        $isRoot    = $this->isRoot();
+        $dirLength = strlen($this->name());
+        if ($dirLength >= strlen($name)) { return false; }
+        $contains = $isRoot || strncmp($name, $this->name(), $dirLength) === 0;
         if (!$directly || !$contains) { return $contains; }
-        return strpos($name, '/', $isRoot ? 0 : strlen($this->name()) + 1) === false;
+        return strpos($name, '/', $isRoot ? 0 : $dirLength + 1) === false;
     }
 }
