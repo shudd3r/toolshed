@@ -26,6 +26,7 @@ class LocalSetup extends Setup
 
     protected function directory(string $pathname): Filesystem\Directory
     {
+        is_dir($pathname) || mkdir($pathname, 0777, true);
         return Filesystem\Local\LocalDirectory::root($pathname);
     }
 

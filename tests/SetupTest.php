@@ -31,4 +31,15 @@ class SetupTest extends TestCase
 
         $this->assertInstanceOf(SharedTools::class, $setup->sharedTools($composer, $io));
     }
+
+    public function testClientBinDirectory()
+    {
+        $setup    = new Setup\LocalSetup();
+        $composer = new Composer();
+        $testDir  = new Fixtures\TempFiles(static::class);
+        $composer->setConfig($config = new Config());
+        $config->merge(['config' => ['bin-dir' => $testDir->pathname('client/project/vendor/bin')]]);
+
+        $this->assertTrue($setup->clientBinDirectory($composer)->exists());
+    }
 }

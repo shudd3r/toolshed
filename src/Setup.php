@@ -30,6 +30,11 @@ abstract class Setup
         return new SharedTools($tools, $registry, $io);
     }
 
+    public function clientBinDirectory(Composer $composer): Directory
+    {
+        return $this->directory($composer->getConfig()->get('bin-dir'));
+    }
+
     abstract protected function processor(): ProcessExecutor;
 
     abstract protected function directory(string $pathname): Directory;
