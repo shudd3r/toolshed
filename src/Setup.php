@@ -18,6 +18,9 @@ use Shudd3r\Toolshed\Filesystem\Directory;
 use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Sync\RefData;
 use Shudd3r\Toolshed\Sync\UsageRegistry;
+use Composer\Package\RootPackageInterface;
+use Composer\Semver\Constraint\ConstraintInterface as Constraint;
+use Shudd3r\Toolshed\Tools\Identifier;
 
 
 abstract class Setup
@@ -30,9 +33,11 @@ abstract class Setup
         return new SharedTools($tools, $registry, $io);
     }
 
-    public function clientBinDirectory(Composer $composer): Directory
+    public function requestedTools(Composer $composer, IOInterface $io): RequestedTools
     {
-        return $this->directory($composer->getConfig()->get('bin-dir'));
+        $clientBinDir    = $this->directory($composer->getConfig()->get('bin-dir'));
+        $toolIdentifiers = $this->toolIdentifiers($composer->getPackage(), $io);
+        return new RequestedTools($clientBinDir, $toolIdentifiers);
     }
 
     abstract protected function processor(): ProcessExecutor;
@@ -40,4 +45,29 @@ abstract class Setup
     abstract protected function directory(string $pathname): Directory;
 
     abstract protected function refData(File $dataFile): RefData;
+
+    /** @returns Identifier[] */
+    private function toolIdentifiers(RootPackageInterface $package, IOInterface $io): array
+    {
+        $devLinks      = $package->getDevRequires();
+        $phpConstraint = $this->phpConstraint($package);
+
+        $toolIds = [];
+        foreach ($package->getExtra()['shared-tools'] ?? [] as $toolName) {
+            if (!isset($devLinks[$toolName])) {
+                $message = '[SKIPPED] Shared dev tool `%s` not found in require-dev composer.json';
+                $io->writeError(sprintf($message, $toolName));
+                continue;
+            }
+            $toolIds[] = new Identifier($toolName, $devLinks[$toolName]->getConstraint(), $phpConstraint);
+        }
+        return $toolIds;
+    }
+
+    private function phpConstraint(RootPackageInterface $package): Constraint
+    {
+        $links = $package->getRequires();
+        $php   = $links['php'] ?? null;
+        return $php ? $php->getConstraint() : Identifier::parseConstraint('*');
+    }
 }

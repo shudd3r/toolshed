@@ -14,13 +14,16 @@ namespace Shudd3r\Toolshed\Tests;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\Setup;
 use Shudd3r\Toolshed\SharedTools;
+use Shudd3r\Toolshed\RequestedTools;
 use Composer\Composer;
+use Composer\Package;
 use Composer\Config;
+use Composer\Semver;
 
 
 class SetupTest extends TestCase
 {
-    public function testLocalInstance()
+    public function testSharedToolsInstantiation()
     {
         $setup    = new Setup\LocalSetup();
         $io       = new Doubles\FakeIO();
@@ -32,14 +35,35 @@ class SetupTest extends TestCase
         $this->assertInstanceOf(SharedTools::class, $setup->sharedTools($composer, $io));
     }
 
-    public function testClientBinDirectory()
+    public function testRequestedToolsBuilding()
     {
         $setup    = new Setup\LocalSetup();
         $composer = new Composer();
+        $io       = new Doubles\FakeIO();
         $testDir  = new Fixtures\TempFiles(static::class);
         $composer->setConfig($config = new Config());
+        $composer->setPackage($package = new Package\RootPackage('client/project', '1.0.0', '1.0.0'));
         $config->merge(['config' => ['bin-dir' => $testDir->pathname('client/project/vendor/bin')]]);
 
-        $this->assertTrue($setup->clientBinDirectory($composer)->exists());
+        $package->setExtra(['shared-tools' => ['foo/bar', 'bar/baz', 'unlisted/package']]);
+        $package->setRequires(['php' => $this->link('php', '6.0')]);
+        $package->setDevRequires([
+            'foo/bar' => $this->link('foo/bar', '^12.4'),
+            'bar/baz' => $this->link('bar/baz', '7.4.*')
+        ]);
+
+        $this->assertInstanceOf(RequestedTools::class, $setup->requestedTools($composer, $io));
+        $error = '[SKIPPED] Shared dev tool `unlisted/package` not found in require-dev composer.json';
+        $this->assertSame([$error], $io->errors);
+    }
+
+    private function link(string $name, string $version): Package\Link
+    {
+        return new Package\Link('shudd3r/toolshed', $name, $this->constraint($version));
+    }
+
+    private function constraint(string $version): Semver\Constraint\ConstraintInterface
+    {
+        return (new Semver\VersionParser())->parseConstraints($version);
     }
 }
