@@ -19,38 +19,35 @@ use Composer\IO\IOInterface;
 
 class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSubscriberInterface
 {
-    private static bool $isPluginActive = false;
-
     public static function getSubscribedEvents(): array
     {
-        if (!self::$isPluginActive) { return []; }
-
         return [
-            Plugin\PluginEvents::COMMAND         => 'verifyInstallCommand',
+            Plugin\PluginEvents::COMMAND         => 'setCommand',
             Plugin\PluginEvents::PRE_POOL_CREATE => 'manageSharedTools'
         ];
     }
 
-    private IOInterface $io;
+    private IOInterface         $io;
+    private Plugin\CommandEvent $event;
 
     public function activate(Composer $composer, IOInterface $io)
     {
-        $sharedTools = $composer->getPackage()->getExtra()['shared-tools'] ?? [];
-        self::$isPluginActive = !empty($sharedTools);
-        if (!self::$isPluginActive) { return; }
-
         $this->io = $io;
     }
 
-    public function verifyInstallCommand(Plugin\CommandEvent $event): void
+    public function setCommand(Plugin\CommandEvent $event): void
     {
-        $installCommand = in_array($event->getCommandName(), ['install', 'update'], true);
-        self::$isPluginActive = $installCommand && !$event->getInput()->getOption('no-dev');
+        $this->event = $event;
     }
 
     public function manageSharedTools(): void
     {
-        if (!self::$isPluginActive) { return; }
+        if (!isset($this->io, $this->event)) { return; }
+
+        $isInstall = in_array($this->event->getCommandName(), ['install', 'update'], true);
+        $isActive  = $isInstall && !$this->event->getInput()->getOption('no-dev');
+        if (!$isActive) { return; }
+
         $this->io->write('Activating');
     }
 
