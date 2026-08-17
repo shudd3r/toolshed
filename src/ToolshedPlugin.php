@@ -15,6 +15,7 @@ use Composer\Plugin;
 use Composer\EventDispatcher;
 use Composer\Composer;
 use Composer\IO\IOInterface;
+use Composer\Package;
 
 
 class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSubscriberInterface
@@ -58,6 +59,7 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
 
         $this->io->write('Activating');
         $requestedTools = $this->setup->requestedTools($this->composer, $this->io);
+        $this->filterDevRequires($requestedTools, $this->composer->getPackage());
         $this->setup->sharedTools($this->composer, $this->io)->update($requestedTools);
     }
 
@@ -69,5 +71,14 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
     public function uninstall(Composer $composer, IOInterface $io)
     {
         $io->write('Removing');
+    }
+
+    private function filterDevRequires(RequestedTools $requestedTools, Package\RootPackageInterface $package): void
+    {
+        $devRequires = $package->getDevRequires();
+        foreach ($requestedTools->toolIdentifiers() as $tool) {
+            unset($devRequires[$tool->packageName()]);
+        }
+        $package->setDevRequires($devRequires);
     }
 }

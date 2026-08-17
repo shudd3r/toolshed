@@ -39,7 +39,7 @@ class ToolshedPluginTest extends TestCase
     public function testForInstallCommands_PluginIsActivated(string $command)
     {
         $plugin = new ToolshedPlugin(new Doubles\FakeSetup());
-        $plugin->activate($this->composer(), $io = new Doubles\FakeIO());
+        $plugin->activate($composer = $this->composer(), $io = new Doubles\FakeIO());
 
         $plugin->setCommand($this->command($command));
         $plugin->manageSharedTools();
@@ -50,6 +50,7 @@ class ToolshedPluginTest extends TestCase
             '  - Updating tool <info>foo/bar</info> ...FAILED',
             '  - Updating tool <info>bar/baz</info> (<comment>1.8.0</comment>)'
         ], $io->errors);
+        $this->assertSame(['not/tool'], array_keys($composer->getPackage()->getDevRequires()));
     }
 
     public function testSubscribedEvents_MatchPluginMethods()
@@ -105,8 +106,9 @@ class ToolshedPluginTest extends TestCase
 
         $composer->setPackage($package = new Package\RootPackage('test/package', '1.0.0', '1.0.0'));
         $package->setDevRequires([
-            'foo/bar' => new Package\Link('test/package', 'foo/bar', $this->constraint('^2.6')),
-            'bar/baz' => new Package\Link('test/package', 'bar/baz', $this->constraint('1.8.0'))
+            'not/tool' => new Package\Link('test/package', 'not/tool', $this->constraint('4.*')),
+            'foo/bar'  => new Package\Link('test/package', 'foo/bar', $this->constraint('^2.6')),
+            'bar/baz'  => new Package\Link('test/package', 'bar/baz', $this->constraint('1.8.0'))
         ]);
         $package->setExtra(['shared-tools' => ['foo/bar', 'bar/baz', 'not/dev']]);
 
