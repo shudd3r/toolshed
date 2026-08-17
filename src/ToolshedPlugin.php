@@ -27,12 +27,20 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
         ];
     }
 
+    private Setup               $setup;
+    private Composer            $composer;
     private IOInterface         $io;
     private Plugin\CommandEvent $event;
 
+    public function __construct(?Setup $setup = null)
+    {
+        $this->setup = $setup ?? new Setup\LocalSetup();
+    }
+
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->io = $io;
+        $this->composer = $composer;
+        $this->io       = $io;
     }
 
     public function setCommand(Plugin\CommandEvent $event): void
@@ -49,6 +57,8 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
         if (!$isActive) { return; }
 
         $this->io->write('Activating');
+        $requestedTools = $this->setup->requestedTools($this->composer, $this->io);
+        $this->setup->sharedTools($this->composer, $this->io)->update($requestedTools);
     }
 
     public function deactivate(Composer $composer, IOInterface $io)

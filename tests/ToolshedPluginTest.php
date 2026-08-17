@@ -15,7 +15,10 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\ToolshedPlugin;
 use Composer\Composer;
 use Composer\Plugin;
-use Symfony\Component\Console\Output;
+use Composer\Config;
+use Composer\Package;
+use Composer\Semver;
+use Symfony\Component;
 
 
 class ToolshedPluginTest extends TestCase
@@ -35,13 +38,18 @@ class ToolshedPluginTest extends TestCase
     /** @dataProvider installCommands */
     public function testForInstallCommands_PluginIsActivated(string $command)
     {
-        $plugin = new ToolshedPlugin();
-        $plugin->activate(new Composer(), $io = new Doubles\FakeIO());
+        $plugin = new ToolshedPlugin(new Doubles\FakeSetup());
+        $plugin->activate($this->composer(), $io = new Doubles\FakeIO());
 
         $plugin->setCommand($this->command($command));
         $plugin->manageSharedTools();
 
         $this->assertSame(['Activating'], $io->messages);
+        $this->assertSame([
+            '[SKIPPED] Shared dev tool `not/dev` not found in require-dev composer.json',
+            '  - Updating tool <info>foo/bar</info> ...FAILED',
+            '  - Updating tool <info>bar/baz</info> (<comment>1.8.0</comment>)'
+        ], $io->errors);
     }
 
     public function testSubscribedEvents_MatchPluginMethods()
@@ -82,6 +90,31 @@ class ToolshedPluginTest extends TestCase
 
     private function command(string $command, bool $noDev = false): Plugin\CommandEvent
     {
-        return new Plugin\CommandEvent(Plugin\PluginEvents::COMMAND, $command, new Doubles\FakeInput($noDev), new Output\NullOutput());
+        $input  = new Doubles\FakeInput($noDev);
+        $output = new Component\Console\Output\NullOutput();
+        return new Plugin\CommandEvent(Plugin\PluginEvents::COMMAND, $command, $input, $output);
+    }
+
+    private function composer(): Composer
+    {
+        $composer = new Composer();
+
+        $composer->setConfig($config = new Config());
+        $config->setBaseDir('/client/project');
+        $config->merge(['config' => ['home' => '/composer/global']]);
+
+        $composer->setPackage($package = new Package\RootPackage('test/package', '1.0.0', '1.0.0'));
+        $package->setDevRequires([
+            'foo/bar' => new Package\Link('test/package', 'foo/bar', $this->constraint('^2.6')),
+            'bar/baz' => new Package\Link('test/package', 'bar/baz', $this->constraint('1.8.0'))
+        ]);
+        $package->setExtra(['shared-tools' => ['foo/bar', 'bar/baz', 'not/dev']]);
+
+        return $composer;
+    }
+
+    private function constraint(string $version): Semver\Constraint\ConstraintInterface
+    {
+        return (new Semver\VersionParser())->parseConstraints($version);
     }
 }
