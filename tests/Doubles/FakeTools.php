@@ -19,17 +19,25 @@ use Shudd3r\Toolshed\Tools\Tool;
 
 class FakeTools extends Tools
 {
+    public static function forWindows(): self
+    {
+        return new self(true);
+    }
+
     public array $installed = [];
     public array $removed   = [];
 
-    public VirtualDirectory $directory;
+    public VirtualDirectory $root;
 
     private ?Identifier $exceptionId = null;
 
-    public function __construct()
+    public function __construct(bool $isWindows = false)
     {
-        $this->directory = VirtualDirectory::root('vfs://root/composer-global', '/');
-        parent::__construct(new FakeProcessExecutor(), $this->directory);
+        $this->root = VirtualDirectory::root('vfs://root', '/');
+
+        $toolsDir  = $this->root->subdirectory('shared-tools');
+        $processor = new FakeProcessExecutor($toolsDir, $isWindows);
+        parent::__construct($processor, $toolsDir);
     }
 
     public function install(Identifier $tool): Tool
@@ -38,8 +46,7 @@ class FakeTools extends Tools
             throw new Tools\Exception\ToolSetupException('This is exception message.');
         }
         $this->installed[] = $tool;
-        $toolDir = $this->directory->subdirectory('shared-tools/' . $tool->installName() . '/vendor/bin');
-        return new Tool($tool, $toolDir);
+        return parent::install($tool);
     }
 
     public function remove(Identifier $tool): void
