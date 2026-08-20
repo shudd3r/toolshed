@@ -14,100 +14,66 @@ namespace Shudd3r\Toolshed\Tests;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Toolshed\ToolshedPlugin;
 use Composer\Composer;
-use Composer\Package;
 use Composer\Plugin;
-use Symfony\Component\Console\Output\NullOutput;
+use Composer\Config;
+use Composer\Package;
+use Composer\Semver;
+use Symfony\Component;
 
 
 class ToolshedPluginTest extends TestCase
 {
-    public function testSubscribedEvents_ForNotActivatedPlugin_ReturnsEmptyArray()
-    {
-        $this->assertSame([], ToolshedPlugin::getSubscribedEvents());
-    }
-
-    public function testSubscribedEvents_ForActivatedPlugin_ReturnsEventHandlerMethods()
-    {
-        $eventHandlers = [
-            Plugin\PluginEvents::COMMAND         => 'verifyInstallCommand',
-            Plugin\PluginEvents::PRE_POOL_CREATE => 'manageSharedTools'
-        ];
-
-        $plugin = new ToolshedPlugin();
-        $plugin->activate($this->composer(), new Doubles\FakeIO());
-        $this->assertSame($eventHandlers, ToolshedPlugin::getSubscribedEvents());
-    }
-
-    public function testPluginMethods_OutputCorrespondingMessages()
-    {
-        $composer = $this->composer();
-        $io       = new Doubles\FakeIO();
-        $plugin   = new ToolshedPlugin();
-
-        $plugin->activate($composer, $io);
-        $this->assertSame([], $io->messages);
-
-        $plugin->manageSharedTools();
-        $this->assertSame(['Activating'], $io->messages);
-
-        $plugin->deactivate($composer, $io);
-        $this->assertSame(['Activating', 'Deactivating'], $io->messages);
-
-        $plugin->uninstall($composer, $io);
-        $this->assertSame(['Activating', 'Deactivating', 'Removing'], $io->messages);
-    }
-
-    public function testPackageWithoutSharedToolsListed_IsNotActivated()
-    {
-        $inactivePackages = [
-            'no shared-tools section' => $this->composer(null),
-            'no shared-tools listed'  => $this->composer([])
-        ];
-
-        $io     = new Doubles\FakeIO();
-        $plugin = new ToolshedPlugin();
-        foreach ($inactivePackages as $case => $package) {
-            $plugin->activate($package, $io);
-            $this->assertEmpty(ToolshedPlugin::getSubscribedEvents(), 'Failed for ' . $case);
-        }
-    }
-
-    public function testManageSharedTools_ForInactivePlugin_WillExitWithoutMessage()
-    {
-        $composer = $this->composer([]);
-        $io       = new Doubles\FakeIO();
-        $plugin   = new ToolshedPlugin();
-        $plugin->activate($composer, $io);
-        $plugin->manageSharedTools();
-        $this->assertSame([], $io->messages);
-    }
-
     /** @dataProvider nonInstallCommands */
     public function testForNonInstallCommands_PluginIsNotActivated(string $command, bool $noDev)
     {
         $plugin = new ToolshedPlugin();
-        $io     = new Doubles\FakeIO();
-        $plugin->activate($this->composer(), $io);
+        $plugin->activate(new Composer(), $io = new Doubles\FakeIO());
 
-        $command = new Plugin\CommandEvent('not-install', $command, new Doubles\FakeInput($noDev), new NullOutput());
-        $plugin->verifyInstallCommand($command);
+        $plugin->execute($this->command($command, $noDev));
 
-        $plugin->manageSharedTools();
         $this->assertSame([], $io->messages);
     }
 
     /** @dataProvider installCommands */
     public function testForInstallCommands_PluginIsActivated(string $command)
     {
-        $plugin = new ToolshedPlugin();
-        $io     = new Doubles\FakeIO();
-        $plugin->activate($this->composer(), $io);
+        $plugin = new ToolshedPlugin(new Doubles\FakeSetup());
+        $plugin->activate($composer = $this->composer(), $io = new Doubles\FakeIO());
 
-        $command = new Plugin\CommandEvent('not-install', $command, new Doubles\FakeInput(), new NullOutput());
-        $plugin->verifyInstallCommand($command);
+        $plugin->execute($this->command($command));
 
-        $plugin->manageSharedTools();
         $this->assertSame(['Activating'], $io->messages);
+        $this->assertSame([
+            '[SKIPPED] Shared dev tool `not/dev` not found in require-dev composer.json',
+            '  - Updating tool <info>foo/bar</info> ...FAILED',
+            '  - Updating tool <info>bar/baz</info> (<comment>1.8.0</comment>)'
+        ], $io->errors);
+        $this->assertSame(['not/tool'], array_keys($composer->getPackage()->getDevRequires()));
+    }
+
+    public function testSubscribedEvents_MatchPluginMethods()
+    {
+        $plugin = new ToolshedPlugin();
+        $events = ToolshedPlugin::getSubscribedEvents();
+        foreach ($events as $method) {
+            $this->assertTrue(method_exists($plugin, $method));
+            $this->assertTrue(is_callable([$plugin, $method]));
+        }
+
+        $this->assertSame([Plugin\PluginEvents::COMMAND], array_keys($events));
+    }
+
+    public function testPluginMethods_OutputCorrespondingMessages()
+    {
+        $composer = new Composer();
+        $io       = new Doubles\FakeIO();
+        $plugin   = new ToolshedPlugin();
+
+        $plugin->deactivate($composer, $io);
+        $this->assertSame(['Deactivating'], $io->messages);
+
+        $plugin->uninstall($composer, $io);
+        $this->assertSame(['Deactivating', 'Removing'], $io->messages);
     }
 
     public static function nonInstallCommands(): array
@@ -120,16 +86,34 @@ class ToolshedPluginTest extends TestCase
         return [['install'], ['update']];
     }
 
-    private function composer(?array $sharedTools = ['phpunit/phpunit']): Composer
+    private function command(string $command, bool $noDev = false): Plugin\CommandEvent
     {
-        $package  = new Package\RootPackage('test/package', '1.0.0', '1.0.0');
-        $composer = new Composer();
-        $composer->setPackage($package);
+        $input  = new Doubles\FakeInput($noDev);
+        $output = new Component\Console\Output\NullOutput();
+        return new Plugin\CommandEvent(Plugin\PluginEvents::COMMAND, $command, $input, $output);
+    }
 
-        if ($sharedTools !== null) {
-            $package->setExtra(['shared-tools' => $sharedTools]);
-        }
+    private function composer(): Composer
+    {
+        $composer = new Composer();
+
+        $composer->setConfig($config = new Config());
+        $config->setBaseDir('/client/project');
+        $config->merge(['config' => ['home' => '/composer/global']]);
+
+        $composer->setPackage($package = new Package\RootPackage('test/package', '1.0.0', '1.0.0'));
+        $package->setDevRequires([
+            'not/tool' => new Package\Link('test/package', 'not/tool', $this->constraint('4.*')),
+            'foo/bar'  => new Package\Link('test/package', 'foo/bar', $this->constraint('^2.6')),
+            'bar/baz'  => new Package\Link('test/package', 'bar/baz', $this->constraint('1.8.0'))
+        ]);
+        $package->setExtra(['shared-tools' => ['foo/bar', 'bar/baz', 'not/dev']]);
 
         return $composer;
+    }
+
+    private function constraint(string $version): Semver\Constraint\ConstraintInterface
+    {
+        return (new Semver\VersionParser())->parseConstraints($version);
     }
 }

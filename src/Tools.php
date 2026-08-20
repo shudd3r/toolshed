@@ -31,6 +31,8 @@ class Tools
 
     public function install(Identifier $tool): Tool
     {
+        $tool->isResolved() && $this->toolsDir->subdirectory($tool->installName() . '/vendor/bin')->remove();
+
         $options   = $tool->isResolved() ? '' : '--dry-run --no-install ';
         $command   = 'composer update ' . $options . '--no-progress 2>&1';
         $errorCode = $this->processor->execute($command, $output, $this->workDir($tool));

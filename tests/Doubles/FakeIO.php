@@ -12,10 +12,16 @@
 namespace Shudd3r\Toolshed\Tests\Doubles;
 
 use Composer\IO\NullIO;
+use Composer\IO\IOInterface;
 
 
 class FakeIO extends NullIO
 {
+    public static function verbose(): self
+    {
+        return new self(IOInterface::VERBOSE);
+    }
+
     public array $messages = [];
     public array $errors   = [];
 
