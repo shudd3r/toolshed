@@ -29,8 +29,7 @@ class ToolshedPluginTest extends TestCase
         $plugin = new ToolshedPlugin();
         $plugin->activate(new Composer(), $io = new Doubles\FakeIO());
 
-        $plugin->setCommand($this->command($command, $noDev));
-        $plugin->manageSharedTools();
+        $plugin->execute($this->command($command, $noDev));
 
         $this->assertSame([], $io->messages);
     }
@@ -41,8 +40,7 @@ class ToolshedPluginTest extends TestCase
         $plugin = new ToolshedPlugin(new Doubles\FakeSetup());
         $plugin->activate($composer = $this->composer(), $io = new Doubles\FakeIO());
 
-        $plugin->setCommand($this->command($command));
-        $plugin->manageSharedTools();
+        $plugin->execute($this->command($command));
 
         $this->assertSame(['Activating'], $io->messages);
         $this->assertSame([
@@ -62,8 +60,7 @@ class ToolshedPluginTest extends TestCase
             $this->assertTrue(is_callable([$plugin, $method]));
         }
 
-        $eventNames = [Plugin\PluginEvents::COMMAND, Plugin\PluginEvents::PRE_POOL_CREATE];
-        $this->assertSame($eventNames, array_keys($events));
+        $this->assertSame([Plugin\PluginEvents::COMMAND], array_keys($events));
     }
 
     public function testPluginMethods_OutputCorrespondingMessages()

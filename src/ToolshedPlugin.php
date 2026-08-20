@@ -22,16 +22,12 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
 {
     public static function getSubscribedEvents(): array
     {
-        return [
-            Plugin\PluginEvents::COMMAND         => 'setCommand',
-            Plugin\PluginEvents::PRE_POOL_CREATE => 'manageSharedTools'
-        ];
+        return [Plugin\PluginEvents::COMMAND => 'execute'];
     }
 
-    private Setup               $setup;
-    private Composer            $composer;
-    private IOInterface         $io;
-    private Plugin\CommandEvent $event;
+    private Setup       $setup;
+    private Composer    $composer;
+    private IOInterface $io;
 
     public function __construct(?Setup $setup = null)
     {
@@ -44,17 +40,12 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
         $this->io       = $io;
     }
 
-    public function setCommand(Plugin\CommandEvent $event): void
+    public function execute(Plugin\CommandEvent $command): void
     {
-        $this->event = $event;
-    }
+        if (!isset($this->io)) { return; }
 
-    public function manageSharedTools(): void
-    {
-        if (!isset($this->io, $this->event)) { return; }
-
-        $isInstall = in_array($this->event->getCommandName(), ['install', 'update'], true);
-        $isActive  = $isInstall && !$this->event->getInput()->getOption('no-dev');
+        $isInstall = in_array($command->getCommandName(), ['install', 'update'], true);
+        $isActive  = $isInstall && !$command->getInput()->getOption('no-dev');
         if (!$isActive) { return; }
 
         $this->io->write('Activating');
