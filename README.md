@@ -6,12 +6,26 @@
 [![LICENSE](https://img.shields.io/github/license/shudd3r/toolshed.svg?color=blue)](LICENSE)
 ### Composer plugin orchestrating global dev tool packages
 
-Detailed description (optional)...
+##### Core features:
+- **Avoid multiple installations of the same tool**, which might reduce
+  filesystem clutter by thousands of files. Tools are installed, updated
+  & synchronized in Composer's global subdirectories, so multiple versions
+  of the same tool would still be available for different projects.
+
+- **Isolate the project's dev environment** - "dirty" tool dependencies
+  such as autoloaded polyfill functions might make your IDE behave as if
+  your target PHP version supported them (which would remain true until
+  the project reaches no-dev stage on production).
+
+- **Neutral to non-plugin environments** - use dev tools as if they were
+  installed as the project's local `require-dev` packages. Environments
+  with the plugin installed shouldn't notice any difference beside reduced
+  number of libraries within the `vendor` directory. The plugin maintains
+  only _redirect binaries_ to shared tool executables.
 
 ### Installation with [Composer](https://getcomposer.org/)
 ```bash
 composer global require shudd3r/toolshed
 ```
 
-Your content here...
-
+...
