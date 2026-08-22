@@ -6,6 +6,12 @@
 [![LICENSE](https://img.shields.io/github/license/shudd3r/toolshed.svg?color=blue)](LICENSE)
 ### Composer plugin orchestrating global dev tool packages
 
+Most dev dependencies listed in `composer.json` of your projects are not
+an integral part of these projects. At best, they are common libraries,
+like testing frameworks, that your dev environment depends on. These tools
+could be installed in shared locations and used remotely.
+This is the whole idea behind **Toolshed** plugin.
+
 ##### Core features:
 - **Avoid multiple installations of the same tool**, which might reduce
   filesystem clutter by thousands of files. Tools are installed, updated
