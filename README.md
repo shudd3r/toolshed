@@ -25,6 +25,7 @@
 
 ### Installation with [Composer](https://getcomposer.org/)
 ```bash
+composer global config allow-plugins.shudd3r/toolshed true
 composer global require shudd3r/toolshed
 ```
 
