@@ -62,3 +62,35 @@ files from project's `vendor` directory and move them to `shared-tools` in
 Composer's global `home` location, leaving only short _redirect binaries_
 in your `vendor/bin` directory instead. The goal is to make the tools work
 as if the plugin was not installed.
+
+### TODO & Known issues
+> [!WARNING]
+> Links to shared tools are not removed after tool is removed from list
+> or plugin is deactivated (either globally or `shared-tools` removed
+> from `composer.json`. Composer doesn't overwrite existing binary files.
+>
+> **TODO:** Requires reorganizing link creation control flow
+
+> [!WARNING]
+> IDE integrations (PhpStorm):
+> - Tool namespace references require adding external libraries, which
+>   would import unwanted classes and polyfill functions, defeating the
+>   isolation goal.
+> - Configuration for PHPUnit tests requires either the `.phar` location
+>   or the path to composer's `autoload.php`, which might change
+>   dynamically due to version updates.
+>
+> **Possible solution**: Merged `autoload.php` for main namespaces or
+> static redirect file
+
+> [!WARNING]
+> Relative paths for tool commands that directly or indirectly refer
+> to resources from `vendor` directory will no longer be valid.
+>
+> **Possible solution**: Custom binaries (outside plugin scope)
+
+> [!WARNING]
+> Faulty path resolution in binary files. For example Composer
+> autoload.php` lookup based on current working directory.
+>
+> **Possible solution**: Fixing PRs or custom binaries
