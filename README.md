@@ -35,4 +35,30 @@ composer global config allow-plugins.shudd3r/toolshed true
 composer global require shudd3r/toolshed
 ```
 
-...
+### Basic Usage
+Select commonly used tools from `require-dev` section of `composer.json`
+that are not specific to your project's dev environment and add their
+package names to `extra.shared-tools` list. For example:
+```json
+{
+    "require-dev": {
+        "phpunit/phpunit": "^12.0",
+        "friendsofphp/php-cs-fixer": "^3.90",
+        "project/template-builder": "2.4.*"
+    },
+    "extra": {
+        "shared-tools": ["phpunit/phpunit", "friendsofphp/php-cs-fixer"]
+    }
+}
+```
+You can add this section directly to project's `composer.json` file or use
+the following command (quotes might need escaping on Windows):
+```bash
+composer config --json --merge extra.shared-tools '["friendsofphp/php-cs-fixer"]'
+```
+
+Now, running `composer update` or `install` will remove the listed tool
+files from project's `vendor` directory and move them to `shared-tools` in
+Composer's global `home` location, leaving only short _redirect binaries_
+in your `vendor/bin` directory instead. The goal is to make the tools work
+as if the plugin was not installed.
