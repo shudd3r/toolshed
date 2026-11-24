@@ -32,7 +32,7 @@ class RequestedTools
         return $this->clientBinDirectory;
     }
 
-    /** @return array<Identifier> */
+    /** @return list<Identifier> */
     public function toolIdentifiers(): array
     {
         return array_values(array_filter($this->toolIdentifiers));

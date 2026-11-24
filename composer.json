@@ -1,8 +1,8 @@
 {
     "name": "shudd3r/toolshed",
     "description": "Composer plugin orchestrating global dev tool packages",
-    "type": "composer-plugin",
     "license": "MIT",
+    "type": "composer-plugin",
     "authors": [
         {
             "name": "shudd3r",
@@ -15,7 +15,7 @@
         "composer-plugin-api": "^2.0"
     },
     "require-dev": {
-        "polymorphine/dev": "0.6.1",
+        "polymorphine/dev": "0.8.0",
         "composer/composer": "^2.0"
     },
     "autoload": {
@@ -28,18 +28,20 @@
             "Shudd3r\\Toolshed\\Tests\\": "tests/"
         }
     },
-    "scripts": {
-        "test-cs": [
-            "php-cs-fixer --dry-run -v --config=cs-fixer.php.dist --path-mode=intersection fix src tests",
-            "phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors src",
-            "phpcs --extensions=php --standard=vendor/polymorphine/dev/phpcs.xml --colors --ignore=*/code-samples/* tests"
-        ],
-        "test-php": "phpunit",
-        "test-skeleton": "polymorphine-skeleton check"
-    },
     "extra": {
         "class": "Shudd3r\\Toolshed\\ToolshedPlugin",
         "plugin-modifies-install-path": true,
-        "plugin-optional": true
+        "plugin-optional": true,
+        "shared-tools": [
+            "polymorphine/dev"
+        ]
+    },
+    "scripts": {
+        "test-cs": [
+            "polymorphine-csfixer",
+            "polymorphine-phpcs"
+        ],
+        "test-php": "polymorphine-phpunit",
+        "test-skeleton": "polymorphine-skeleton check"
     }
 }

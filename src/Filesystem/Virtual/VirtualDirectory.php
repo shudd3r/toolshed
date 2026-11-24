@@ -12,7 +12,6 @@
 namespace Shudd3r\Toolshed\Filesystem\Virtual;
 
 use Shudd3r\Toolshed\Filesystem\Directory;
-use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Node;
 use Shudd3r\Toolshed\Filesystem\Exception;
 use Generator;
@@ -63,7 +62,6 @@ class VirtualDirectory extends Directory
         return $node instanceof VirtualDirectory ? $node : $file;
     }
 
-    /** @return Generator<File> */
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $filter ??= static fn (VirtualFile $node) => true;
@@ -71,7 +69,6 @@ class VirtualDirectory extends Directory
         return $this->nodes(!$isRecursive, $typeFilter);
     }
 
-    /** @return Generator<Directory> */
     public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $filter ??= static fn (Directory $node) => true;

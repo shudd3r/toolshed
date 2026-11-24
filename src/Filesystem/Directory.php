@@ -41,14 +41,14 @@ abstract class Directory extends Node
     abstract public function subdirectory(string $name): Directory;
 
     /**
-     * @param callable(File): bool|null $filter fn(string) => bool
+     * @param null|callable(File): bool $filter
      *
      * @return Generator<File>
      */
     abstract public function files(bool $isRecursive = false, ?callable $filter = null): Generator;
 
     /**
-     * @param callable(Directory): bool|null $filter fn(string) => bool
+     * @param null|callable(Directory): bool $filter
      *
      * @return Generator<Directory>
      */

@@ -86,6 +86,7 @@ class Identifier
         return new self($this->name, $version, $this->php);
     }
 
+    /** @return array{require: array<string, string>} */
     public function composerRequire(): array
     {
         $required = $this->isResolved() ? [] : ['php' => $this->php->getPrettyString()];

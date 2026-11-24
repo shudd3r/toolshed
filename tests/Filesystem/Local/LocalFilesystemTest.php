@@ -24,7 +24,7 @@ class LocalFilesystemTest extends FilesystemTests
 
     public static function setUpBeforeClass(): void
     {
-        self::$temp = new TempFiles(basename(static::class));
+        self::$temp = new TempFiles(static::class);
     }
 
     protected function tearDown(): void

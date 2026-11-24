@@ -24,7 +24,7 @@ class LocalRefDataTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$temp = new TempFiles(basename(static::class));
+        self::$temp = new TempFiles(static::class);
         self::$temp->directory('existing/directory');
         self::$temp->file('foo/bar/file.txt');
     }

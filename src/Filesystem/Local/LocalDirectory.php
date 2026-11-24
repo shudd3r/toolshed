@@ -12,7 +12,6 @@
 namespace Shudd3r\Toolshed\Filesystem\Local;
 
 use Shudd3r\Toolshed\Filesystem\Directory;
-use Shudd3r\Toolshed\Filesystem\File;
 use Shudd3r\Toolshed\Filesystem\Exception;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
@@ -26,6 +25,15 @@ class LocalDirectory extends Directory
 {
     use RemoveLeafNodeMethod;
 
+    /**
+     * Local filesystem root constructor.
+     *
+     * @param string $rootPath
+     *
+     * @throws Exception\FilesystemException
+     *
+     * @return self
+     */
     public static function root(string $rootPath): self
     {
         $rootPath = str_replace(['/', '\\'], self::$ds, $rootPath);
@@ -60,7 +68,7 @@ class LocalDirectory extends Directory
         return new self($this->pathname($name), $this->rootLength);
     }
 
-    /** @return Generator<File> */
+    /** @param null|callable(): bool $filter */
     public function files(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $typeFilter = fn (string $pathname): bool => is_file($pathname);
@@ -73,7 +81,6 @@ class LocalDirectory extends Directory
         }
     }
 
-    /** @return Generator<Directory> */
     public function subdirectories(bool $isRecursive = false, ?callable $filter = null): Generator
     {
         $typeFilter  = static fn (string $pathname): bool => is_dir($pathname);

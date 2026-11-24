@@ -26,8 +26,7 @@ class TempFiles
 
     public function __construct(string $testName)
     {
-        $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . $testName;
-        $this->root = dirname(__DIR__, 2) . self::DS . $this->relative($tmpName);
+        $this->root = getenv('DEV_TESTS_DIRECTORY') . self::DS . basename(str_replace('\\', self::DS, $testName));
         is_dir($this->root) || mkdir($this->root, 0700, true);
     }
 
