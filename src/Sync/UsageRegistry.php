@@ -20,11 +20,17 @@ class UsageRegistry
     private RefData $refData;
     private ?array  $toolRefs = null;
 
+    /**
+     * Update procedures for tool usage tracking.
+     *
+     * @param RefData $refData
+     */
     public function __construct(RefData $refData)
     {
         $this->refData = $refData;
     }
 
+    /** Updates concrete package tool usage references. */
     public function update(RequestedTools $tools): void
     {
         $clientBinDir = str_replace('\\', '/', (string) $tools->clientBinDirectory());
@@ -50,7 +56,11 @@ class UsageRegistry
         ksort($this->toolRefs);
     }
 
-    /** @return array<Identifier> */
+    /**
+     * Currently installed tools without package references.
+     *
+     * @return array<Identifier>
+     */
     public function unusedTools(): array
     {
         $this->toolRefs ??= $this->refData->toolRefs();
@@ -58,12 +68,14 @@ class UsageRegistry
         return array_map(fn (string $installName) => Identifier::fromInstallName($installName), $installNames);
     }
 
+    /** Removes package version reference. */
     public function remove(Identifier $tool): void
     {
         $this->toolRefs ??= $this->refData->toolRefs();
         unset($this->toolRefs[$tool->installName()]);
     }
 
+    /** Persists current data. */
     public function __destruct()
     {
         isset($this->toolRefs) && $this->refData->save($this->toolRefs);

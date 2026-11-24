@@ -29,6 +29,7 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
     private Composer    $composer;
     private IOInterface $io;
 
+    /** @param null|Setup $setup Controlled setup for manual test runs */
     public function __construct(?Setup $setup = null)
     {
         $this->setup = $setup ?? new Setup\LocalSetup();
@@ -40,6 +41,11 @@ class ToolshedPlugin implements Plugin\PluginInterface, EventDispatcher\EventSub
         $this->io       = $io;
     }
 
+    /**
+     * Command event callback.
+     *
+     * @param Plugin\CommandEvent $command Command event data passed by Composer
+     */
     public function execute(Plugin\CommandEvent $command): void
     {
         if (!isset($this->io)) { return; }

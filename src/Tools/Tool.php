@@ -19,17 +19,20 @@ class Tool
     private Identifier $identifier;
     private Directory  $binaries;
 
+    /** Data object with package tool links location. */
     public function __construct(Identifier $identifier, Directory $binaries)
     {
         $this->identifier = $identifier;
         $this->binaries   = $binaries;
     }
 
+    /** @return Identifier Resolved version Expected */
     public function identifier(): Identifier
     {
         return $this->identifier;
     }
 
+    /** @return Directory Usually package's vendor/bin direcctory */
     public function binaries(): Directory
     {
         return $this->binaries;

@@ -20,6 +20,11 @@ use LogicException;
 
 class Identifier
 {
+    /**
+     * Static constructor from install directory name.
+     *
+     * @see self::installName()
+     */
     public static function fromInstallName(string $installName): self
     {
         [$vendor, $package, $version] = explode('.', $installName, 3) + [null, '', ''];
@@ -30,11 +35,13 @@ class Identifier
         return self::fromStrings($vendor . '/' . $package, $version);
     }
 
+    /** Static constructor with primitive types */
     public static function fromStrings(string $name, string $version = '*', string $phpVersion = '*'): self
     {
         return new self($name, self::parseConstraint($version), self::parseConstraint($phpVersion));
     }
 
+    /** Helper version Constraint factory */
     public static function parseConstraint(string $version): Constraint
     {
         $parser = new VersionParser();
@@ -45,6 +52,11 @@ class Identifier
     private Constraint $version;
     private Constraint $php;
 
+    /**
+     * @param string     $name
+     * @param Constraint $version
+     * @param Constraint $phpVersion
+     */
     public function __construct(string $name, Constraint $version, Constraint $phpVersion)
     {
         $this->name    = $name;
@@ -52,26 +64,31 @@ class Identifier
         $this->php     = $phpVersion;
     }
 
+    /** @return string Conventional Composer vendor/package name */
     public function packageName(): string
     {
         return $this->name;
     }
 
+    /** @return string Resolved version string or 'unresolved' */
     public function version(): string
     {
         return $this->isResolved() ? $this->version->getPrettyString() : 'unresolved';
     }
 
+    /** @return string Package name+version merged into nstall directory name */
     public function installName(): string
     {
         return str_replace('/', '.', $this->name) . '.' . $this->version();
     }
 
+    /** @return bool True if identifier points to exact version */
     public function isResolved(): bool
     {
         return $this->isExactVersion($this->version);
     }
 
+    /** @param Constraint $version Exact version constraint */
     public function resolvedTo(Constraint $version): self
     {
         if ($this->isResolved()) {

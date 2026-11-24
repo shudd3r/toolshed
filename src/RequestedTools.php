@@ -27,6 +27,7 @@ class RequestedTools
         $this->toolIdentifiers    = $this->indexedIdentifiers(...$toolIdentifiers);
     }
 
+    /** @return Directory */
     public function clientBinDirectory(): Directory
     {
         return $this->clientBinDirectory;
@@ -38,6 +39,11 @@ class RequestedTools
         return array_values(array_filter($this->toolIdentifiers));
     }
 
+    /**
+     * @param Identifier $tool
+     *
+     * @return void
+     */
     public function update(Identifier $tool): void
     {
         $this->toolIdentifiers[$tool->packageName()] = $tool->isResolved() ? $tool : null;

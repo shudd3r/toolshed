@@ -20,6 +20,9 @@ abstract class RefData
     private File   $dataFile;
     private ?array $toolClientRefs = null;
 
+    /**
+     * @param File $dataFile Data used to track packages using shared tools versions
+     */
     public function __construct(File $dataFile)
     {
         $this->dataFile = $dataFile;

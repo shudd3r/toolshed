@@ -25,6 +25,7 @@ class SharedTools
     private UsageRegistry $registry;
     private IOInterface   $io;
 
+    /** Represents current state and references of shared tools environment. */
     public function __construct(Tools $tools, UsageRegistry $registry, IOInterface $io)
     {
         $this->tools    = $tools;
@@ -32,6 +33,11 @@ class SharedTools
         $this->io       = $io;
     }
 
+    /**
+     * Update shared tools based on single package requrest.
+     *
+     * @param RequestedTools $requestedTools
+     */
     public function update(RequestedTools $requestedTools): void
     {
         foreach ($requestedTools->toolIdentifiers() as $requestedTool) {

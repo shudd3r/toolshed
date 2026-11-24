@@ -23,6 +23,14 @@ class VirtualDirectory extends Directory
 
     public static array $nodes = [];
 
+    /**
+     * Virtual filesystem main constructor.
+     *
+     * @param string $rootPath
+     * @param string $ds
+     *
+     * @return self
+     */
     public static function root(string $rootPath = '/', string $ds = DIRECTORY_SEPARATOR): self
     {
         self::$ds    = $ds;

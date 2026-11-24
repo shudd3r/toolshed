@@ -25,6 +25,7 @@ use Shudd3r\Toolshed\Tools\Identifier;
 
 abstract class Setup
 {
+    /** @see SharedTools */
     public function sharedTools(Composer $composer, IOInterface $io): SharedTools
     {
         $toolsDir = $this->directory($composer->getConfig()->get('home'))->subdirectory('shared-tools');
@@ -33,6 +34,7 @@ abstract class Setup
         return new SharedTools($tools, $registry, $io);
     }
 
+    /** @see RequestedTools */
     public function requestedTools(Composer $composer, IOInterface $io): RequestedTools
     {
         $clientBinDir    = $this->directory($composer->getConfig()->get('bin-dir'));

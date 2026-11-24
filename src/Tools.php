@@ -23,12 +23,20 @@ class Tools
     private ProcessExecutor $processor;
     private Directory       $toolsDir;
 
+    /** Tool installation procedures. */
     public function __construct(ProcessExecutor $processor, Directory $toolsDir)
     {
         $this->processor = $processor;
         $this->toolsDir  = $toolsDir;
     }
 
+    /**
+     * @param Identifier $tool Ranged versions will be resolved to newest available
+     *
+     * @throws Filesystem\Exception\FilesystemException
+     *
+     * @return Tool Installed tool details
+     */
     public function install(Identifier $tool): Tool
     {
         $tool->isResolved() && $this->toolsDir->subdirectory($tool->installName() . '/vendor/bin')->remove();
@@ -48,6 +56,7 @@ class Tools
             : $this->install($this->resolvedTool($tool, $output));
     }
 
+    /** Removes tool files. */
     public function remove(Identifier $tool): void
     {
         $this->toolsDir->subdirectory($tool->installName())->remove();
