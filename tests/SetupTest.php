@@ -27,6 +27,7 @@ use Composer\Util;
 
 class SetupTest extends TestCase
 {
+    /** @noinspection PhpParamsInspection */
     public function testSharedToolsInstantiation()
     {
         $setup    = new Setup\LocalSetup();
@@ -46,6 +47,7 @@ class SetupTest extends TestCase
         ), $sharedTools);
     }
 
+    /** @noinspection PhpParamsInspection */
     public function testRequestedToolsBuilding()
     {
         $setup    = new Setup\LocalSetup();
